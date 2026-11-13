@@ -315,24 +315,31 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8p
 .view-picker { display: flex; align-items: center; gap: 12px; padding: 12px 22px; border-bottom: 1px solid var(--line); font-size: 13px; font-weight: 600; }
 .view-picker select { min-height: 38px; border-color: var(--line); }
 #orbitCanvas { display: block; width: 100%; height: clamp(360px, 50vw, 480px); cursor: crosshair; touch-action: none; }
+#orbitCanvas { grid-area: 2 / 1 / auto / -1; }
 #orbitCanvas[data-gesture="rotate"] { cursor: grabbing; }
 #orbitCanvas[data-gesture="pan"] { cursor: move; }
-.orbit-viewport { position: relative; }
-.orbit-axis-key {
-  position: absolute; inset: 4px auto auto 4px; pointer-events: none;
-  display: flex; align-items: center; gap: 5px;
-  padding: 3px 10px 3px 2px; border: 1px solid var(--line);
-  border-radius: 9px; background: rgb(255 255 255 / 95%);
-  color: var(--ink); font-size: 12px; line-height: 1.5;
+.orbit-viewport {
+  position: relative; display: grid;
+  grid-template-columns: minmax(0, 1fr) auto; align-items: start;
 }
-#orbitAxisGlyph { width: 66px; height: 66px; flex: none; }
+.orbit-axis-key {
+  position: relative; grid-area: 1 / 1; pointer-events: none;
+  width: min(250px, calc(100% - 8px)); height: 142px; margin: 4px 0 0 4px;
+  border: 1px solid var(--line); border-radius: 9px;
+  background: rgb(255 255 255 / 95%);
+}
+#orbitAxisGlyph, #orbitAxisNames { position: absolute; inset: 0; width: 100%; height: 100%; }
 #orbitAxisNames { margin: 0; padding: 0; list-style: none; }
-#orbitAxisNames li { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
-#orbitAxisNames [data-axis-letter] { min-width: 1em; text-align: center; font: 700 12px var(--digits); }
-#orbitAxisNames [data-axis-letter="X"] { color: #a43a37; }
-#orbitAxisNames [data-axis-letter="Y"] { color: #1e704b; }
-#orbitAxisNames [data-axis-letter="Z"] { color: #315eaa; }
-#orbitCube { position: absolute; top: 4px; right: 4px; width: 90px; color: var(--muted); z-index: 1; text-align: center; }
+#orbitAxisNames li {
+  position: absolute; display: grid; justify-items: center; gap: 1px;
+  padding: 2px 4px; border-radius: 4px; background: #fff;
+  font-size: 18px; font-weight: 650; line-height: 1.18; white-space: nowrap;
+}
+#orbitAxisNames small { font-size: 11px; font-weight: 500; }
+#orbitAxisNames [data-axis="cost"] { color: #a43a37; }
+#orbitAxisNames [data-axis="score"] { color: #1e704b; }
+#orbitAxisNames [data-axis="time"] { color: #315eaa; }
+#orbitCube { position: relative; grid-area: 1 / 2; margin: 4px 4px 0 0; width: 90px; color: var(--muted); z-index: 1; text-align: center; }
 #orbitCubeSvg { display: block; width: 90px; height: 90px; }
 #orbitCubeSvg g { cursor: pointer; }
 #orbitCubeSvg polygon { stroke: #7890b0; stroke-width: 1; }
@@ -356,7 +363,8 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8p
 @media (max-width: 600px) {
   .view-picker, #pinnedStrip { padding-inline: 13px; }
   #orbitCanvas { height: 360px; }
-  #orbitAxisGlyph { width: 54px; height: 54px; }
+  .orbit-axis-key { width: min(200px, calc(100% - 8px)); height: 116px; }
+  #orbitAxisNames li { font-size: 15px; }
 }
 </style>
 </head>
@@ -462,11 +470,11 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8p
           <div class="orbit-viewport">
           <canvas id="orbitCanvas" tabindex="0" role="application" aria-label="三維散點圖，成本、智慧指數與每任務時間" aria-describedby="orbitAxisNames orbitHelp orbitKeys" hidden></canvas>
           <div id="orbitAxisKey" class="orbit-axis-key" hidden>
-            <canvas id="orbitAxisGlyph" aria-hidden="true" width="66" height="66"></canvas>
+            <canvas id="orbitAxisGlyph" aria-hidden="true"></canvas>
             <ul id="orbitAxisNames" aria-label="三維座標軸">
-              <li><span data-axis-letter="X">X</span>成本（USD）</li>
-              <li><span data-axis-letter="Y">Y</span>智慧指數</li>
-              <li><span data-axis-letter="Z">Z</span>時間（分鐘）</li>
+              <li data-axis="cost">成本<small>USD</small></li>
+              <li data-axis="score">智慧指數</li>
+              <li data-axis="time">時間<small>分鐘</small></li>
             </ul>
           </div>
           <div id="orbitCube" hidden>
@@ -490,7 +498,7 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8p
             <div id="orbitLegend" class="plot-legend"></div>
             <p id="orbitCount" class="side-note"></p>
           </div>
-          <p id="orbitHelp" class="side-note plot-explainer">右鍵從資料點開始拖曳，即可繞該點旋轉。中鍵或 Ctrl＋右鍵拖曳平移，滾輪以游標為中心縮放。左鍵固定模型，按 F 置中。</p>
+          <p id="orbitHelp" class="side-note plot-explainer">右鍵拖曳會繞著按下的位置旋轉。中鍵或 Ctrl＋右鍵拖曳平移，滾輪以游標為中心縮放。左鍵固定模型，按 F 置中。</p>
           <details class="plot-help side-note">
             <summary>鍵盤操作與有效前緣</summary>
             <p id="orbitKeys">方向鍵切換模型，Shift＋方向鍵旋轉，Ctrl＋Shift＋方向鍵平移。＋／− 縮放，F 置中，0 重設。Enter 固定模型，Esc 解除固定。觸控可單指旋轉、雙指平移與縮放。</p>
@@ -2224,14 +2232,12 @@ let orbitDragged = false;
 
 function constrainOrbit(view) {
   const scale = clamp(view.scale, 1, maxOrbitScale);
-  // Allow a corner of the projected cube to stay under a cursor near the viewport edge.
-  const limit = scale * Math.sqrt(3) / 2 + 4;
   return {
     yaw: view.yaw % (2 * Math.PI),
     pitch: clamp(view.pitch, -Math.PI / 2, Math.PI / 2),
     scale,
-    panX: clamp(Number.isFinite(view.panX) ? view.panX : 0, -limit, limit),
-    panY: clamp(Number.isFinite(view.panY) ? view.panY : 0, -limit, limit)
+    panX: Number.isFinite(view.panX) ? view.panX : 0,
+    panY: Number.isFinite(view.panY) ? view.panY : 0
   };
 }
 
@@ -2284,10 +2290,27 @@ function visibleOrbitPivot() {
     nearest = distance;
     depth = projected.depth;
   }
+  return orbitPositionAtDepth(x, y, depth);
+}
+
+function orbitPositionAtDepth(x, y, depth) {
   const cY = Math.cos(orbit.yaw), sY = Math.sin(orbit.yaw);
   const cP = Math.cos(orbit.pitch), sP = Math.sin(orbit.pitch);
   const horizontalDepth = y * sP + depth * cP;
   return [x * cY + horizontalDepth * sY, depth * sP - y * cP, horizontalDepth * cY - x * sY];
+}
+
+function pointerOrbitPivot(event) {
+  const rect = orbitCanvas.getBoundingClientRect();
+  const x = event.clientX - rect.left, y = event.clientY - rect.top;
+  const unit = orbitUnit(rect.width, rect.height);
+  const hit = orbitHit(x, y, orbitScreenProjection(rect.width, rect.height));
+  const depth = hit?.screen.depth ?? orbitProjection(orbit)(visibleOrbitPivot()).depth;
+  return orbitPositionAtDepth(
+    ((x - rect.width / 2) / unit - orbit.panX) / orbit.scale,
+    ((y - rect.height / 2) / unit - orbit.panY) / orbit.scale,
+    depth
+  );
 }
 
 function rotateOrbit(yaw, pitch, pivot) {
@@ -2574,7 +2597,9 @@ orbitCanvas.addEventListener('pointerdown', event => {
   orbitCanvas.dataset.gesture = action;
   orbitPointers.set(event.pointerId, {
     x: event.clientX, y: event.clientY, action, selects: touch || event.button === 0,
-    pivot: action === 'rotate' ? hitAtPointer(event)?.position ?? visibleOrbitPivot() : null
+    pivot: action !== 'rotate' ? null
+      : touch ? hitAtPointer(event)?.position ?? visibleOrbitPivot()
+      : pointerOrbitPivot(event)
   });
   orbitCanvas.setPointerCapture(event.pointerId);
 });
@@ -2746,58 +2771,92 @@ $('orbitViewMenu').addEventListener('click', event => {
 
 const axisGlyph = $('orbitAxisGlyph');
 const axisGlyphContext = axisGlyph.getContext('2d');
-const axisLetters = [...$('orbitAxisNames').querySelectorAll('[data-axis-letter]')].map(label => ({
-  letter: label.dataset.axisLetter,
-  color: getComputedStyle(label).color
+const axisLabels = [...$('orbitAxisNames').children].map((element, axis) => ({
+  element, color: getComputedStyle(element).color,
+  direction: [0, 1, 2].map(index => Number(index === axis))
 }));
 let axisGlyphView;
 
+function placeAxisLabel(label, x, y, ux, uy, width, height, occupied) {
+  const w = label.element.offsetWidth, h = label.element.offsetHeight;
+  const outside = Math.min(w / 2 / Math.abs(ux), h / 2 / Math.abs(uy)) + 5;
+  const target = {x: x + ux * outside, y: y + uy * outside};
+  const boxAt = (x, y) => ({
+    x: clamp(x - w / 2, 3, width - w - 3),
+    y: clamp(y - h / 2, 3, height - h - 3),
+    w, h
+  });
+  const fits = box => occupied.every(other =>
+    box.x + w + 3 <= other.x || other.x + other.w + 3 <= box.x ||
+    box.y + h + 3 <= other.y || other.y + other.h + 3 <= box.y
+  );
+  const preferred = boxAt(target.x, target.y);
+  if (fits(preferred)) return preferred;
+
+  // Find the closest free position when projected axes converge.
+  let best = preferred, distance = Infinity;
+  for (let row = 3; row <= height - h - 3; row += 4) {
+    for (let col = 3; col <= width - w - 3; col += 4) {
+      const box = {x: col, y: row, w, h};
+      const offset = (col + w / 2 - target.x) ** 2 + (row + h / 2 - target.y) ** 2;
+      if (offset >= distance || !fits(box)) continue;
+      best = box;
+      distance = offset;
+    }
+  }
+  return best;
+}
+
 function drawAxisGlyph(project) {
-  const size = 66;
-  const pixels = Math.round(size * Math.min(devicePixelRatio || 1, 2));
-  const key = `${orbit.yaw}|${orbit.pitch}|${pixels}`;
+  const width = axisGlyph.clientWidth, height = axisGlyph.clientHeight;
+  if (!width || !height) return;
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const key = `${orbit.yaw}|${orbit.pitch}|${width}|${height}|${dpr}`;
   if (key === axisGlyphView) return;
   axisGlyphView = key;
-
-  if (axisGlyph.width !== pixels) axisGlyph.width = axisGlyph.height = pixels;
+  const pixelsWide = Math.round(width * dpr), pixelsHigh = Math.round(height * dpr);
+  if (axisGlyph.width !== pixelsWide) axisGlyph.width = pixelsWide;
+  if (axisGlyph.height !== pixelsHigh) axisGlyph.height = pixelsHigh;
   const ctx = axisGlyphContext;
-  ctx.setTransform(pixels / size, 0, 0, pixels / size, 0, 0);
-  ctx.clearRect(0, 0, size, size);
-  const center = size / 2;
-  const directions = axisLetters.map(({letter, color}, axis) => {
-    const endpoint = [0, 0, 0];
-    endpoint[axis] = 1;
-    return {letter, color, ...project(endpoint)};
-  }).sort((a, b) => a.depth - b.depth);
+  ctx.setTransform(pixelsWide / width, 0, 0, pixelsHigh / height, 0, 0);
+  ctx.clearRect(0, 0, width, height);
 
-  ctx.lineWidth = 1.5;
-  ctx.lineCap = 'round';
-  ctx.font = '600 11px system-ui, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  for (const {x, y, color} of directions) {
-    ctx.strokeStyle = color;
+  const cx = width / 2, cy = height / 2;
+  const radius = height * .285;
+  const occupied = [];
+  const directions = axisLabels.map(label => ({...label, ...project(label.direction)}))
+    .sort((a, b) => Math.hypot(b.x, b.y) - Math.hypot(a.x, a.y));
+  for (const label of directions) {
+    const length = Math.hypot(label.x, label.y);
+    const ux = length > .04 ? label.x / length : 0;
+    const uy = length > .04 ? label.y / length : label.depth < 0 ? -1 : 1;
+    const x = cx + label.x * radius, y = cy + label.y * radius;
+    const box = placeAxisLabel(label, x, y, ux, uy, width, height, occupied);
+    occupied.push(box);
+    label.element.style.transform = `translate(${box.x}px, ${box.y}px)`;
+
+    ctx.strokeStyle = ctx.fillStyle = label.color;
+    ctx.lineWidth = 2.25;
+    ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(center, center);
-    ctx.lineTo(center + x * 20, center + y * 20);
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(x, y);
     ctx.stroke();
-  }
-  const labels = [];
-  for (const {x, y, letter, color} of directions) {
-    const length = Math.hypot(x, y);
-    if (length < .18) continue;
-    const ux = x / length, uy = y / length;
-    const r = length * 20 + 7;
-    let px = center + ux * r, py = center + uy * r;
-    if (labels.some(label => Math.hypot(label.x - px, label.y - py) < 10)) {
-      px -= uy * 10;
-      py += ux * 10;
+    if (length > .2) {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - ux * 6 - uy * 3, y - uy * 6 + ux * 3);
+      ctx.lineTo(x - ux * 6 + uy * 3, y - uy * 6 - ux * 3);
+      ctx.closePath();
+      ctx.fill();
     }
-    px = clamp(px, 6, size - 6);
-    py = clamp(py, 6, size - 6);
-    labels.push({x: px, y: py});
-    ctx.fillStyle = color;
-    ctx.fillText(letter, px, py);
+    ctx.globalAlpha = .55;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(clamp(x, box.x, box.x + box.w), clamp(y, box.y, box.y + box.h));
+    ctx.stroke();
+    ctx.globalAlpha = 1;
   }
 }
 
