@@ -132,29 +132,6 @@ details summary:hover { text-decoration: underline; }
 .plot-point.is-muted { opacity: .13; }
 .plot-point.is-pinned circle { stroke-width: 2.4; }
 .plot-point.is-pinned circle:last-child { r: 6; }
-.inspector { --model-color: var(--accent); background: #f1f5ff; border-left: 1px solid #dce5f6; padding: 23px 25px 21px; min-width: 0; display: flex; flex-direction: column; }
-.inspector-top { display: flex; justify-content: space-between; align-items: center; gap: 5px; color: var(--muted); font-size: 11px; }
-#inspectorState { color: var(--accent); font-size: 10px; }
-.inspector-heading { min-height: 110px; padding-top: 25px; }
-.inspect-provider { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 11px; }
-.inspect-provider::before { content: ""; width: 6px; height: 6px; background: var(--model-color); border-radius: 50%; flex: 0 0 auto; }
-.inspector h3 { margin-top: 8px; font-size: 22px; font-weight: 600; letter-spacing: -.035em; overflow-wrap: anywhere; }
-.inspect-main { display: grid; grid-template-columns: 1fr; gap: 17px; margin-block: 23px; }
-.inspect-main span { display: block; color: var(--muted); font-size: 11px; }
-.inspect-main strong { display: block; margin-top: 2px; font: 500 36px/1.15 "Source Sans 3", "Trebuchet MS", system-ui, sans-serif; letter-spacing: -.055em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.inspect-main>div:first-child strong { color: var(--accent); font-size: 50px; }
-.inspect-details { display: grid; gap: 8px; padding-block: 17px; border-top: 1px solid #d7e1f3; }
-.inspect-details>div { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
-.inspect-details dt { color: var(--muted); font-size: 11px; }
-.inspect-details dd { font: 12px/1.5 var(--digits); text-align: right; overflow-wrap: anywhere; }
-.inspect-frontier { display: flex; align-items: center; gap: 7px; font-size: 11px; color: #315b37; margin-block: 0 15px; }
-.inspect-frontier::before { content: ""; width: 8px; height: 8px; border: 1.5px solid currentColor; border-radius: 50%; }
-.inspector-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: auto; }
-.inspector-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 5px 8px; border-color: #c2cfe9; background: transparent; font-size: 11px; }
-#pinInspection { flex: 1 1 auto; }
-#pinInspection[aria-pressed="true"] { background: white; color: var(--accent); border-color: var(--accent); }
-#findModel { flex: 1 1 auto; }
-.inspect-note { margin-top: 11px; color: var(--muted); font-size: 11px; line-height: 1.6; }
 .workspace { display: grid; grid-template-columns: 280px minmax(0,1fr); gap: 32px; margin-top: 50px; align-items: start; }
 .panel { min-width: 0; }
 .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px 16px; min-height: 78px; padding-block: 0 20px; }
@@ -258,23 +235,12 @@ tr.virtual-spacer > td { height: var(--spacer-height); padding: 0 !important; bo
 footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 14px; padding-block: 24px 35px; margin-top: 40px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
 @media (max-width: 1160px) {
   .analysis-content { grid-template-columns: minmax(0,1fr) 250px; }
-  .inspector { padding-inline: 20px; }
   .workspace { grid-template-columns: 250px minmax(0,1fr); gap: 24px; }
   .chart-area { padding-inline: 15px; }
   .plot-toolbar { padding-inline: 20px; gap: 10px 15px; }
 }
 @media (max-width: 900px) {
   .analysis-content { grid-template-columns: minmax(0,1fr); }
-  .inspector { border-left: 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: minmax(0,1.1fr) minmax(0,1fr); gap: 8px 30px; padding: 20px 25px; }
-  .inspector-top { grid-column: 1/-1; }
-  .inspector-heading { grid-column: 1; min-height: 0; padding-top: 8px; }
-  .inspect-main { grid-row: 2/4; grid-column: 2; display: flex; justify-content: space-between; align-items: start; gap: 20px; margin-block: 12px; }
-  .inspect-main strong,.inspect-main>div:first-child strong { font-size: 36px; }
-  .inspect-details { grid-column: 1/-1; grid-template-columns: repeat(3,minmax(0,1fr)); padding-block: 12px; gap: 15px; }
-  .inspect-details>div { flex-wrap: wrap; gap: 4px 8px; }
-  .inspect-frontier { grid-column: 1; margin-block: 0; }
-  .inspector-actions { grid-column: 1; margin: 0; }
-  .inspect-note { grid-column: 2; align-self: center; margin: 0; }
   .workspace { grid-template-columns: minmax(0,1fr); gap: 35px; margin-top: 35px; }
   .setup-head { min-height: 45px; padding-bottom: 12px; }
   .setup-body { display: grid; grid-template-columns: minmax(235px,36%) minmax(0,1fr); gap: 14px 25px; }
@@ -316,17 +282,6 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8p
   .plot-meta>p { padding: 0 6px; }
   .plot-explainer,.plot-help { padding-inline: 6px; }
   .plot-empty { min-height: 335px; }
-  .inspector { padding: 18px; gap: 10px; grid-template-columns: minmax(0,1fr); }
-  .inspector-top,.inspector-heading,.inspect-main,.inspect-details,.inspect-frontier,.inspector-actions,.inspect-note { grid-column: 1; grid-row: auto; }
-  .inspector-heading { padding-top: 3px; }
-  .inspector-actions button { min-height: 42px; }
-  .inspector h3 { font-size: 20px; margin-top: 5px; }
-  .inspect-main { display: grid; grid-template-columns: 1fr 1fr; margin-block: 7px 8px; }
-  .inspect-main strong,.inspect-main>div:first-child strong { font-size: 36px; }
-  .inspect-details { gap: 8px; }
-  .inspect-details>div { display: block; }
-  .inspect-details dd { text-align: left; margin-top: 4px; }
-  .inspect-note { margin-top: 0; }
   .setup-body { display: block; }
   #providers { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .providers { padding: 0 0 14px; border-right: 0; border-bottom: 1px solid var(--line); }
@@ -350,25 +305,31 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8p
 }
   
 /* The efficiency view shares the visual grammar of the cost chart, with its own viewport. */
-.time-chart-panel { margin-top: 34px; scroll-margin-top: 100px; }
-.time-analysis-board { border-radius: 16px; }
-.time-chart-area { padding: 18px 22px 16px; }
-.time-chart-area .plot-window { border: 1px solid var(--rule); border-radius: 8px; }
-.time-chart-area .plot-meta { padding-inline: 2px; }
-.time-chart-footnote { margin-top: 10px; }
 .plot-point.is-cross-highlight { opacity: 1 !important; }
 .plot-point.is-cross-highlight circle:first-child { stroke-width: 2.2; }
 @media (max-width: 860px) {
-  .time-chart-area { padding: 12px 14px 14px; }
-  .time-chart-panel .plot-toolbar { padding-inline: 14px; }
 }
 @media (max-width: 600px) {
-  .time-chart-area { padding: 9px 8px 12px; }
-  .time-chart-panel .plot-toolbar { display: grid; grid-template-columns: 1fr auto; gap: 9px 8px; padding: 13px; }
-  .time-chart-panel .frontier-toggle { margin: 0; }
-  .time-chart-panel .plot-controls { grid-column: 1 / -1; justify-self: end; }
 }
-  </style>
+  .analysis-content { display: block; }
+.view-picker { display: flex; align-items: center; gap: 12px; padding: 12px 22px; border-bottom: 1px solid var(--line); font-size: 13px; font-weight: 600; }
+.view-picker select { min-height: 38px; border-color: var(--line); }
+#orbitCanvas { display: block; width: 100%; height: clamp(360px, 50vw, 480px); cursor: grab; touch-action: none; }
+#orbitCanvas:active { cursor: grabbing; }
+#orbitCanvas:focus-visible { outline-offset: -3px; }
+#orbitEmpty { min-height: 245px; color: var(--muted); padding: 20px; text-align: center; }
+#orbitScale { padding-inline: 8px; font: 11px var(--digits); }
+#orbitReset { border-left: 1px solid var(--line); }
+#orbitToolbar, #timeToolbar { display: flex; justify-content: space-between; }
+#pinnedStrip { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 12px 22px; border-top: 1px solid var(--line); background: var(--accent-light); font-size: 12px; }
+#pinnedSummary { flex: 1 1 280px; overflow-wrap: anywhere; }
+#pinnedStrip button { min-height: 34px; padding: 4px 9px; font-size: 12px; }
+.tip-values { flex-wrap: wrap; gap: 8px 16px; }
+@media (max-width: 600px) {
+  .view-picker, #pinnedStrip { padding-inline: 13px; }
+  #orbitCanvas { height: 360px; }
+}
+</style>
 </head>
 <body>
   <a class="skip" href="#main">跳到主要內容</a>
@@ -379,8 +340,7 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8p
         <h1>Model Lens</h1>
       </a>
       <nav aria-label="頁內導覽">
-        <a href="#chart" class="current">成本分析</a>
-        <a href="#timeChart">效率分析</a>
+        <a href="#chart" class="current">模型分析</a>
         <a href="#database">模型資料</a>
         <a href="#setup">篩選條件</a>
       </nav>
@@ -415,13 +375,30 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8p
     <section id="chart" class="chart-panel" aria-labelledby="chartTitle">
       <div class="chart-heading">
         <div>
-          <h2 id="chartTitle">成本與智慧指數</h2>
-          <p id="scatterHelp">越靠左上，每任務成本越低、智慧指數越高。</p>
+          <h2 id="chartTitle">成本、時間與智慧指數</h2>
+          <p id="scatterHelp">每個點代表一個已選模型。</p>
         </div>
         <a class="chart-jump" href="#database">選擇模型 <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M10 4v12m-5-5 5 5 5-5"/></svg></a>
       </div>
       <div class="analysis-board">
-      <div class="plot-toolbar">
+      <div class="view-picker">
+        <label for="chartView">圖表視圖</label>
+        <select id="chartView">
+          <option value="orbit">3D 總覽</option>
+          <option value="cost">成本 × 智慧</option>
+          <option value="time">時間 × 智慧</option>
+        </select>
+      </div>
+      <div id="orbitToolbar" class="plot-toolbar">
+        <label class="frontier-toggle"><input id="orbitFrontierFocus" type="checkbox"><span>聚焦有效前緣</span></label>
+        <div class="plot-controls" role="group" aria-label="三維圖縮放">
+          <button id="orbitOut" type="button" aria-label="縮小三維圖" disabled>−</button>
+          <output id="orbitScale" aria-label="三維圖縮放比例">100%</output>
+          <button id="orbitIn" type="button" aria-label="放大三維圖" disabled>+</button>
+          <button id="orbitReset" type="button" disabled>重設視角</button>
+        </div>
+      </div>
+      <div id="costToolbar" class="plot-toolbar" hidden>
           <label class="frontier-toggle"><input id="frontierFocus" type="checkbox"><span>聚焦有效前緣</span></label>
           <label class="checks"><input id="logScale" type="checkbox">對數成本軸</label>
           <label class="plot-width" for="zoom">圖寬
@@ -438,44 +415,7 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8p
             <button type="button" id="plotReset" disabled>重設視圖</button>
           </div>
       </div>
-      <div class="analysis-content">
-        <div id="scatter" class="chart-area"></div>
-        <aside id="inspector" class="inspector" aria-label="模型詳情">
-          <div class="inspector-top"><span>模型詳情</span><span id="inspectorState">等待資料</span></div>
-          <div class="inspector-heading">
-            <div id="inspectProvider" class="inspect-provider">尚未選取模型</div>
-            <h3 id="inspectName">從圖表開始探索。</h3>
-          </div>
-          <div class="inspect-main">
-            <div><span>智慧指數</span><strong id="inspectScore">—</strong></div>
-            <div><span id="inspectCostLabel">成本 / 任務（USD）</span><strong id="inspectCost">—</strong></div>
-          </div>
-          <dl class="inspect-details">
-            <div><dt id="inspectTimeLabel">時間 / 任務</dt><dd id="inspectTime">—</dd></div>
-            <div><dt>延遲（秒）</dt><dd id="inspectLatency">—</dd></div>
-            <div><dt>上下文</dt><dd id="inspectContext">—</dd></div>
-          </dl>
-          <p id="inspectFrontier" class="inspect-frontier" hidden>位於有效前緣</p>
-          <div class="inspector-actions">
-            <button id="pinInspection" type="button" aria-pressed="false" disabled><svg aria-hidden="true" viewBox="0 0 20 20"><path d="m7 3 6 0-1 5 3 3v1H5v-1l3-3-1-5Zm3 9v5"/></svg><span>固定此模型</span></button>
-            <button id="findModel" type="button" disabled>查看資料列</button>
-          </div>
-          <p id="inspectNote" class="inspect-note">勾選資料表中的模型後，即可在圖中查看。</p>
-        </aside>
-      </div>
-      </div>
-    </section>
-
-    <section id="timeChart" class="chart-panel time-chart-panel" aria-labelledby="timeChartTitle">
-      <div class="chart-heading">
-        <div>
-          <h2 id="timeChartTitle">任務時間與智慧指數</h2>
-          <p id="timeChartHelp">越靠左上，完成任務越快、智慧指數越高。</p>
-        </div>
-        <a class="chart-jump" href="#database">比較模型 <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M10 4v12m-5-5 5 5 5-5"/></svg></a>
-      </div>
-      <div class="analysis-board time-analysis-board">
-        <div class="plot-toolbar">
+        <div id="timeToolbar" class="plot-toolbar" hidden>
           <label class="frontier-toggle"><input id="timeFrontierFocus" type="checkbox"><span>聚焦有效前緣</span></label>
           <label class="checks"><input id="timeLogScale" type="checkbox">對數時間軸</label>
           <div class="plot-controls" role="group" aria-label="任務時間圖縮放">
@@ -485,9 +425,30 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8p
             <button type="button" id="timePlotReset" disabled>重設視圖</button>
           </div>
         </div>
-        <div id="timeScatter" class="chart-area time-chart-area"></div>
+      <div class="analysis-content">
+        <div id="scatter" class="chart-area" hidden></div>
+        <div id="timeScatter" class="chart-area" hidden></div>
+        <div id="orbitPanel" class="chart-area">
+          <canvas id="orbitCanvas" tabindex="0" role="application" aria-label="三維散點圖，成本、智慧指數與每任務時間" aria-describedby="orbitHelp orbitKeys" hidden></canvas>
+          <div id="orbitEmpty" class="plot-window plot-empty">勾選模型後顯示三維散點圖。</div>
+          <div class="plot-meta">
+            <div id="orbitLegend" class="plot-legend"></div>
+            <p id="orbitCount" class="side-note"></p>
+          </div>
+          <p id="orbitHelp" class="side-note plot-explainer">拖曳旋轉，滾輪或雙指縮放。點選資料點可固定模型。</p>
+          <details class="plot-help side-note">
+            <summary>鍵盤操作與有效前緣</summary>
+            <p id="orbitKeys">方向鍵切換模型，Shift＋方向鍵旋轉，＋／− 縮放，0 重設。Enter 固定模型，Esc 解除固定。</p>
+            <p>有效前緣上的模型，沒有其他已選模型能同時達到成本不高、時間不長、智慧指數不低，且至少一項更好。</p>
+          </details>
+        </div>
+        <div id="pinnedStrip" hidden>
+          <span id="pinnedSummary"></span>
+          <button id="pinnedRow" type="button">查看資料列</button>
+          <button id="unpinModel" type="button">解除固定</button>
+        </div>
       </div>
-      <p class="side-note time-chart-footnote">兩張圖共用模型選取與供應商聚焦；各自保留縮放、平移及有效前緣。點選模型會同步更新上方詳情。</p>
+      </div>
     </section>
 
     <div class="workspace">
@@ -626,8 +587,8 @@ async function request(url,reader=false){const c=new AbortController(),t=setTime
 async function load(){if(busy)return;busy=true;$('sourceType').disabled=true;$('refresh').disabled=true;$('refresh').textContent='擷取中…';const mode='web';$('status').className='status';$('status').textContent='正在擷取 '+(mode==='web'?'供應商即時表格（原站無法直連時，自動改用公開頁中繼）':'官方 API')+'，不使用離線快照…';try{let data=[],fail=[];if(mode==='web'){let results=await Promise.allSettled(SOURCES.map(([slug,name])=>loadProvider(slug,name)));results.forEach((r,i)=>r.status==='fulfilled'?data.push(...r.value):fail.push(SOURCES[i][1]+'（'+(r.reason.name==='AbortError'?'逾時':r.reason instanceof TypeError?'網路 / CORS':r.reason.message)+'）'))}if(!data.length)throw Error(fail.join('；')||'來源未提供模型');models=[...new Map(data.map(m=>[m.id,m])).values()];loadedMode=mode;lastFetched=new Date();restoreSelection(mode);anchor=null;$('status').className='status '+(fail.length?'error':'ok');$('status').textContent=(fail.length?'部分來源失敗：'+fail.join('、')+'。失敗來源未混用舊資料。 ':'已連線。 ')+models.length+' 個模型 / '+new Set(models.map(m=>m.provider)).size+' 個供應商 · 擷取 '+lastFetched.toLocaleString('zh-TW')+'。'+(models.some(m=>m.transport==='reader')?'部分或全部經 Jina Reader 即時讀取公開頁（要求略過快取；不傳送 API 金鑰）。':'原站直接讀取。')+'來源更新時間未提供，可能有上游快取延遲。';updateLabels();renderProviders();render()}catch(e){$('status').className='status error';$('status').textContent='擷取失敗：'+(e.name==='AbortError'?'連線逾時':e instanceof TypeError?'網路或跨來源連線受阻。':e.message)+(models.length?' 仍顯示 '+lastFetched.toLocaleString('zh-TW')+' 擷取的舊資料（'+(loadedMode==='web'?'原網頁':'API')+'模式），不是本次結果。':' 未載入任何離線資料。')}finally{busy=false;$('sourceType').disabled=false;$('refresh').disabled=false;$('refresh').textContent='重新擷取'}}
 
 const preferenceKey = 'model-lens.preferences.v1';
-const valueFields = ['sourceType', 'search', 'exclude', 'match', 'minScore', 'maxCost', 'zoom'];
-const checkFields = ['selectedOnly', 'auto', 'logScale', 'frontierFocus', 'timeLogScale', 'timeFrontierFocus'];
+const valueFields = ['chartView', 'sourceType', 'search', 'exclude', 'match', 'minScore', 'maxCost', 'zoom'];
+const checkFields = ['selectedOnly', 'auto', 'logScale', 'frontierFocus', 'timeLogScale', 'timeFrontierFocus', 'orbitFrontierFocus'];
 const selectionByMode = {};
 const viewByMode = {};
 const timeViewByMode = {};
@@ -653,7 +614,7 @@ function restorePreferences() {
     return;
   }
   if (!saved || typeof saved !== 'object') return;
-  const allowed = {sourceType: ['web'], match: ['any', 'all'], zoom: ['0', '1500', '2000']};
+  const allowed = {chartView: ['orbit', 'cost', 'time'], sourceType: ['web'], match: ['any', 'all'], zoom: ['0', '1500', '2000']};
   for (const id of valueFields) {
     const value = saved.values?.[id];
     if (typeof value === 'string' && (!allowed[id] || allowed[id].includes(value))) $(id).value = value;
@@ -672,6 +633,9 @@ function restorePreferences() {
     if (view && [view.x, view.y, view.scale].every(Number.isFinite)) viewByMode[mode] = constrainView(view);
     if (timeView && [timeView.x, timeView.y, timeView.scale].every(Number.isFinite)) timeViewByMode[mode] = constrainView(timeView);
   }
+  if (saved.orbit && [saved.orbit.yaw, saved.orbit.pitch, saved.orbit.scale].every(Number.isFinite)) {
+    orbit = {yaw: saved.orbit.yaw % (2 * Math.PI), pitch: clamp(saved.orbit.pitch, -.95, 1.1), scale: clamp(saved.orbit.scale, 1, 3)};
+  }
   everLoaded = Object.keys(selectionByMode).length > 0;
 }
 
@@ -685,6 +649,7 @@ function savePreferences() {
       selections: selectionByMode,
       views: viewByMode,
       timeViews: timeViewByMode,
+      orbit,
       pins: pinnedByMode
     }));
   } catch {
@@ -738,12 +703,7 @@ function updateLabels() {
   $('tableDescription').textContent = api
     ? '價格以每百萬 tokens 計。勾選模型可更新散點圖。'
     : '勾選模型可更新散點圖。';
-  $('scatterHelp').textContent = api
-    ? '橫軸為每百萬 tokens 混合單價（3：1），縱軸為智慧指數。'
-    : '越靠左上，每任務成本越低、智慧指數越高。';
-  $('timeChartHelp').textContent = api
-    ? '官方 API 未提供每任務時間；目前無法用此來源繪製效率比較。'
-    : '越靠左上，完成任務越快、智慧指數越高。時間以分鐘計。';
+  updateChartHeading();
 }
 
 function contextValue(v) {
@@ -1002,18 +962,27 @@ $('rows').addEventListener('click', event => {
     saveSelection();
     render();
   }
-  const point = plotState?.points.find(point => point.m.id === model.id);
-  if (!point) {
+  let view = $('chartView').value;
+  if (!canPlotModel(model, view)) {
+    const alternative = ['cost', 'time'].find(mode => canPlotModel(model, mode));
+    if (alternative) {
+      $('chartView').value = alternative;
+      renderChart();
+      view = alternative;
+    }
+  }
+  if (!canPlotModel(model, view)) {
     clearModelPin();
-    inspectModel(model);
-    $('inspectNote').textContent = '缺少可繪製的數值，無法在圖中定位。';
-    $('pinInspection').disabled = true;
+    notify('此模型缺少可繪製的數值');
   } else {
     pinModel(model);
-    if (!point.inView) setPlotView(plotState, baseView);
+    if (view === 'cost' && !plotState.pointMap.get(model.id)?.inView) setPlotView(plotState, baseView);
+    if (view === 'time' && !timePlotState.pointMap.get(model.id)?.inView) setTimePlotView(timePlotState, baseView);
+    if (view === 'orbit' && orbit.scale > 1) setOrbit({...orbit, scale: 1});
   }
   $('chart').scrollIntoView({block: 'start'});
-  if (plotState) plotState.svg.focus({preventScroll: true});
+  const surface = view === 'orbit' ? orbitCanvas : view === 'cost' ? plotState?.svg : timePlotState?.svg;
+  if (canPlotModel(model, view)) surface?.focus({preventScroll: true});
 });
 
 function render() {
@@ -1035,10 +1004,8 @@ function render() {
   }
   renderTableWindow();
   if (tableDataChanged) updateTableMetrics();
-  renderScatter(pick);
-  renderTimeScatter(pick);
+  renderChart(pick);
   updateSortHeaders();
-  syncInspector();
 }
 
 function revealModelRow(id) {
@@ -1136,6 +1103,10 @@ function hidePlotTip() {
   hoverFrame = 0;
   timeHoverFrame = 0;
   $('plotTip').classList.remove('visible');
+  if (orbitHovered) {
+    orbitHovered = null;
+    queueOrbitDraw();
+  }
   if (plotState) {
     plotState.active = null;
     const highlight = plotState.svg.querySelector('#plotHighlight');
@@ -1156,33 +1127,16 @@ function chartCost(value) {
 function showPlotPoint(point, cx, cy) {
   if (!plotState) return;
   const {svg, points, left, right, top, bottom} = plotState;
-  const {m, x, y, front} = point, tip = $('plotTip'), paint = color(m.provider);
+  const {m, x, y} = point, paint = color(m.provider);
   const peers = points.filter(other => other !== point && Math.abs(other.x - x) < .01 && Math.abs(other.y - y) < .01);
   plotState.active = point;
-  inspectPoint(point);
-  paintPlotEmphasis();
   const group = svg.querySelector('#plotHighlight');
   group.setAttribute('visibility', 'visible');
   group.innerHTML = `<path d="M${left} ${y}H${right} M${x} ${top}V${bottom}" stroke="${paint}" stroke-opacity=".55" stroke-dasharray="3 4"/>
     <circle cx="${x}" cy="${y}" r="12" fill="none" stroke="${paint}" stroke-width="1.5"/>
     <circle cx="${x}" cy="${y}" r="6" fill="${paint}" stroke="white" stroke-width="1.5"/>`;
 
-  tip.innerHTML = `<div class="tip-provider">${esc(m.provider)}${front ? '｜有效前緣' : ''}</div>
-    <strong>${esc(m.name)}</strong>
-    <div class="tip-values">
-      <div><span>智慧指數</span><b>${fmt(m.score)}</b></div>
-      <div><span>${loadedMode === 'api' ? 'USD / 1M tokens' : 'USD / 任務'}</span><b>${chartCost(m.cost)}</b></div>
-    </div>
-    ${peers.length ? `<div class="tip-peer"><span class="tip-provider">相同座標的模型（${peers.length}）</span>
-      ${peers.map(peer => `<strong>${esc(peer.m.provider + ' / ' + peer.m.name)}</strong>`).join('')}</div>` : ''}`;
-  tip.style.maxHeight = Math.max(150, window.innerHeight - 24) + 'px';
-  tip.style.overflow = 'hidden';
-  tip.classList.add('visible');
-  const rect = tip.getBoundingClientRect(), pad = 12;
-  const tx = cx + 18 + rect.width > window.innerWidth - pad ? cx - rect.width - 18 : cx + 18;
-  const ty = cy - rect.height - 16 < pad ? cy + 18 : cy - rect.height - 16;
-  tip.style.left = Math.max(pad, Math.min(tx, window.innerWidth - rect.width - pad)) + 'px';
-  tip.style.top = Math.max(pad, Math.min(ty, window.innerHeight - rect.height - pad)) + 'px';
+  showModelTip(point, cx, cy, peers);
 }
 
 function tickStep(min, max, targetTicks) {
@@ -1333,8 +1287,6 @@ function connectPlotGestures(state) {
   svg.addEventListener('wheel', event => {
     const location = plotCoordinates(state, event.clientX, event.clientY);
     if (!location || !inPlot(state, location) || !event.deltaY) return;
-    const scale = (viewByMode[state.mode] ?? baseView).scale;
-    if (event.deltaY > 0 && scale <= 1) return;
     event.preventDefault();
     const multiplier = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? svg.clientHeight : 1;
     movePlotView(state, Math.exp(-clamp(event.deltaY * multiplier, -210, 210) * .003), location);
@@ -1562,8 +1514,8 @@ function updatePlotData(state, pick) {
     `已繪製 ${data.length} 個模型${pick.length > data.length ? `，另有 ${pick.length - data.length} 個模型缺少可繪製的數值` : ''}`;
 
   if (state.active && !nextMap.has(state.active.m.id)) hidePlotTip();
-  connectPlotLegend();
-  syncInspector();
+  paintPlotEmphasis();
+
 }
 
 function renderScatter(pick) {
@@ -1597,7 +1549,7 @@ function renderScatter(pick) {
     const note = pick.length ? '散點圖需要有效的成本與智慧指數。' : '資料表的選取會同步到這裡。';
     host.innerHTML = `<div class="plot-window plot-empty">${empty(title, note)}</div>`;
     updatePlotControls(null);
-    syncInspector();
+
     return;
   }
 
@@ -1642,7 +1594,7 @@ function renderScatter(pick) {
   };
   updatePlotData(plotState, pick);
   connectPlotGestures(plotState);
-  syncInspector();
+
   if (restoreFocus) svg.focus({preventScroll: true});
 }
 
@@ -1813,7 +1765,6 @@ function updateTimePlotData(pick) {
   legend.innerHTML = `${[...providerCounts].map(([name, count]) => `<button type="button" class="legend-item" data-provider-focus="${esc(name)}" aria-pressed="false" aria-label="聚焦 ${esc(name)}"><i style="background:${color(name)}"></i>${esc(name)} <small>${count}</small></button>`).join('')}<span><i class="front-ring"></i>有效前緣</span>`;
   $('timeScatter').querySelector('.plot-meta p').textContent = `已繪製 ${data.length} 個模型${pick.length > data.length ? `，另有 ${pick.length - data.length} 個模型缺少任務時間或智慧指數` : ''}`;
   if (state.active && !nextMap.has(state.active.m.id)) hidePlotTip();
-  connectTimePlotLegend();
   paintPlotEmphasis();
 }
 
@@ -1821,22 +1772,13 @@ function showTimePlotPoint(point, cx, cy) {
   if (!timePlotState) return;
   const state = timePlotState;
   const {svg, points, left, right, top, bottom} = state;
-  const {m, x, y, front} = point, tip = $('plotTip'), paint = color(m.provider);
+  const {m, x, y} = point, paint = color(m.provider);
   const peers = points.filter(other => other !== point && Math.abs(other.x - x) < .01 && Math.abs(other.y - y) < .01);
   state.active = point;
-  inspectModel(m, 'time');
   const group = svg.querySelector('#timePlotHighlight');
   group.setAttribute('visibility', 'visible');
   group.innerHTML = `<path d="M${left} ${y}H${right} M${x} ${top}V${bottom}" stroke="${paint}" stroke-opacity=".55" stroke-dasharray="3 4"/><circle cx="${x}" cy="${y}" r="12" fill="none" stroke="${paint}" stroke-width="1.5"/><circle cx="${x}" cy="${y}" r="6" fill="${paint}" stroke="white" stroke-width="1.5"/>`;
-  tip.innerHTML = `<div class="tip-provider">${esc(m.provider)}${front ? '｜時間有效前緣' : ''}</div><strong>${esc(m.name)}</strong><div class="tip-values"><div><span>智慧指數</span><b>${fmt(m.score)}</b></div><div><span>時間 / 任務</span><b>${fmt(m.time)} 分鐘</b></div></div>${m.cost != null ? `<div class="tip-peer"><span class="tip-provider">成本 / 任務</span><strong>${chartCost(m.cost)}</strong></div>` : ''}${peers.length ? `<div class="tip-peer"><span class="tip-provider">相同座標的模型（${peers.length}）</span>${peers.map(peer => `<strong>${esc(peer.m.provider + ' / ' + peer.m.name)}</strong>`).join('')}</div>` : ''}`;
-  tip.style.maxHeight = Math.max(150, window.innerHeight - 24) + 'px';
-  tip.style.overflow = 'hidden';
-  tip.classList.add('visible');
-  const rect = tip.getBoundingClientRect(), pad = 12;
-  const tx = cx + 18 + rect.width > window.innerWidth - pad ? cx - rect.width - 18 : cx + 18;
-  const ty = cy - rect.height - 16 < pad ? cy + 18 : cy - rect.height - 16;
-  tip.style.left = Math.max(pad, Math.min(tx, window.innerWidth - rect.width - pad)) + 'px';
-  tip.style.top = Math.max(pad, Math.min(ty, window.innerHeight - rect.height - pad)) + 'px';
+  showModelTip(point, cx, cy, peers);
 }
 
 function connectTimePlotGestures(state) {
@@ -1846,8 +1788,6 @@ function connectTimePlotGestures(state) {
   svg.addEventListener('wheel', event => {
     const location = plotCoordinates(state, event.clientX, event.clientY);
     if (!location || !inPlot(state, location) || !event.deltaY) return;
-    const scale = (timeViewByMode[state.mode] ?? baseView).scale;
-    if (event.deltaY > 0 && scale <= 1) return;
     event.preventDefault();
     const multiplier = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? svg.clientHeight : 1;
     moveTimePlotView(state, Math.exp(-clamp(event.deltaY * multiplier, -210, 210) * .003), location);
@@ -1945,30 +1885,6 @@ function connectTimePlotGestures(state) {
   svg.onblur = hidePlotTip;
 }
 
-function connectTimePlotLegend() {
-  const legend = $('timeScatter').querySelector('.plot-legend');
-  if (!legend) return;
-  const buttons = [...legend.querySelectorAll('[data-provider-focus]')];
-  legend.addEventListener('pointerover', event => {
-    if (event.pointerType === 'touch') return;
-    const button = event.target.closest('[data-provider-focus]');
-    if (!button || previewProvider === button.dataset.providerFocus) return;
-    previewProvider = button.dataset.providerFocus;
-    paintPlotEmphasis();
-  });
-  legend.addEventListener('pointerleave', () => { previewProvider = null; paintPlotEmphasis(); });
-  legend.addEventListener('focusin', event => { previewProvider = event.target.closest('[data-provider-focus]')?.dataset.providerFocus ?? null; paintPlotEmphasis(); });
-  legend.addEventListener('focusout', () => { previewProvider = null; paintPlotEmphasis(); });
-  legend.addEventListener('click', event => {
-    const button = event.target.closest('[data-provider-focus]');
-    if (!button) return;
-    const provider = button.dataset.providerFocus;
-    providerSpotlight = providerSpotlight === provider ? null : provider;
-    previewProvider = null;
-    paintPlotEmphasis();
-  });
-}
-
 function renderTimeScatter(pick) {
   const host = $('timeScatter');
   const chartWidth = host.clientWidth;
@@ -1991,7 +1907,7 @@ function renderTimeScatter(pick) {
       : pick.length ? '散點圖需要有效的每任務時間與智慧指數。' : '資料表的選取會同步到這裡。';
     host.innerHTML = `<div class="plot-window plot-empty">${empty(title, note)}</div>`;
     timeUpdateControls(null);
-    syncInspector();
+
     return;
   }
   const widthOption = Number($('zoom').value), padding = getComputedStyle(host);
@@ -2014,7 +1930,7 @@ function renderTimeScatter(pick) {
   timePlotState = {mode: loadedMode, svg, points: [], pointMap: new Map(), pointLayer: svg.querySelector('.time-plot-data'), left, right, top, bottom, width, log, xExtent: 1, yMin: 0, yMax: 1, ticks, grid: svg.querySelector('.plot-grid-lines'), tickNodes: [], active: null, keyboardIndex: null};
   updateTimePlotData(pick);
   connectTimePlotGestures(timePlotState);
-  syncInspector();
+
 }
 
 $('timePlotIn').onclick = () => timeCenterZoom(1.5);
@@ -2029,8 +1945,7 @@ window.addEventListener('resize', () => {
   clearTimeout(plotResizeTimer);
   plotResizeTimer = setTimeout(() => {
     updateTableMetrics();
-    renderScatter(chosen());
-    renderTimeScatter(chosen());
+    renderChart();
   }, 120);
 });
 
@@ -2052,193 +1967,490 @@ function updateConnectionSummary() {
   summary.dataset.state = state;
 }
 new MutationObserver(updateConnectionSummary).observe($('status'), {childList: true, attributes: true, attributeFilter: ['class']});
-// View-only exploration state. Source data and selection remain authoritative.
-let inspectedModel = null;
-let inspectedChart = 'cost';
 let providerSpotlight = null;
 let previewProvider = null;
-let inspectorSnapshot = '';
-let inspectedRow = null;
+let pinnedRowElement = null;
+
+function canPlotModel(model, view) {
+  return Number.isFinite(model.score) &&
+    (view === 'time' || (Number.isFinite(model.cost) && model.cost >= 0)) &&
+    (view === 'cost' || (Number.isFinite(model.time) && model.time >= 0));
+}
+
+function modelSummary(model) {
+  const cost = Number.isFinite(model.cost) ? chartCost(model.cost) : '—';
+  const time = Number.isFinite(model.time) ? fmt(model.time, 4) + ' 分鐘' : '—';
+  return `${model.name} · 智慧 ${fmt(model.score, 3)} · 成本 ${cost} · 時間 ${time}`;
+}
+
+function showModelTip(point, cx, cy, peers = []) {
+  const {m, front} = point;
+  const tip = $('plotTip');
+  tip.innerHTML = `<div class="tip-provider">${esc(m.provider)}${front ? '｜有效前緣' : ''}</div>
+    <strong>${esc(m.name)}</strong>
+    <div class="tip-values">
+      <div><span>智慧指數</span><b>${fmt(m.score, 3)}</b></div>
+      <div><span>成本 / 任務</span><b>${m.cost == null ? '—' : chartCost(m.cost)}</b></div>
+      <div><span>時間 / 任務</span><b>${m.time == null ? '—' : fmt(m.time, 4) + ' 分鐘'}</b></div>
+    </div>
+    ${peers.length ? `<div class="tip-peer"><span class="tip-provider">相同座標的模型（${peers.length}）</span>
+      ${peers.slice(0, 5).map(peer => `<strong>${esc(peer.m.name)}</strong>`).join('')}
+      ${peers.length > 5 ? '<span>可用方向鍵逐一查看</span>' : ''}</div>` : ''}`;
+  tip.style.maxHeight = Math.max(150, innerHeight - 24) + 'px';
+  tip.style.overflow = 'hidden';
+  tip.classList.add('visible');
+  const rect = tip.getBoundingClientRect(), pad = 12;
+  const x = cx + 18 + rect.width > innerWidth - pad ? cx - rect.width - 18 : cx + 18;
+  const y = cy - rect.height - 16 < pad ? cy + 18 : cy - rect.height - 16;
+  tip.style.left = clamp(x, pad, Math.max(pad, innerWidth - rect.width - pad)) + 'px';
+  tip.style.top = clamp(y, pad, Math.max(pad, innerHeight - rect.height - pad)) + 'px';
+}
 
 function paintPlotEmphasis() {
+  const view = $('chartView').value;
   const provider = previewProvider ?? providerSpotlight;
   const pinned = pinnedByMode[loadedMode];
-  const activeId = inspectedModel?.id;
-  const apply = (state, hostId, frontierOnly) => {
-    if (!state) return;
-    for (const point of state.points) {
-      point.element.classList.toggle('is-muted', !!((provider && point.m.provider !== provider) || (frontierOnly && !point.front)));
-      point.element.classList.toggle('is-pinned', point.m.id === pinned);
-      point.element.classList.toggle('is-cross-highlight', point.m.id === activeId);
-    }
-    $(hostId).querySelectorAll('[data-provider-focus]').forEach(button => {
-      button.setAttribute('aria-pressed', String(button.dataset.providerFocus === providerSpotlight));
-    });
-  };
-  apply(plotState, 'scatter', $('frontierFocus').checked);
-  apply(timePlotState, 'timeScatter', $('timeFrontierFocus').checked);
+  const state = view === 'cost' ? plotState : view === 'time' ? timePlotState : null;
+  const frontierOnly = $(view === 'time' ? 'timeFrontierFocus' : 'frontierFocus').checked;
+  for (const point of state?.points ?? []) {
+    const isPinned = point.m.id === pinned;
+    point.element.classList.toggle('is-muted', !isPinned &&
+      !!((provider && point.m.provider !== provider) || (frontierOnly && !point.front)));
+    point.element.classList.toggle('is-pinned', isPinned);
+    point.element.classList.toggle('is-cross-highlight', isPinned);
+  }
+  const host = $(view === 'cost' ? 'scatter' : view === 'time' ? 'timeScatter' : 'orbitPanel');
+  host.querySelectorAll('[data-provider-focus]').forEach(button => {
+    button.setAttribute('aria-pressed', String(button.dataset.providerFocus === providerSpotlight));
+  });
+  queueOrbitDraw();
 }
 
-
-function inspectModel(model, source = inspectedChart) {
-  if (!model) {
-    inspectedModel = null;
-    inspectorSnapshot = '';
-    $('inspectorState').textContent = '等待選取';
-    $('inspectProvider').textContent = '尚未選取模型';
-    $('inspectName').textContent = '從圖表開始探索。';
-    for (const id of ['inspectScore', 'inspectCost', 'inspectTime', 'inspectLatency', 'inspectContext']) $(id).textContent = '—';
-    $('inspectFrontier').hidden = true;
-    $('pinInspection').disabled = true;
-    $('pinInspection').setAttribute('aria-pressed', 'false');
-    $('pinInspection').querySelector('span').textContent = '固定此模型';
-    $('findModel').disabled = true;
-    $('inspectNote').textContent = '勾選資料表中的模型後，即可在圖中查看。';
-    paintPlotEmphasis();
-    return;
-  }
-  inspectedChart = source;
-  const pinned = pinnedByMode[loadedMode] === model.id;
-  const costPoint = plotState?.points.find(point => point.m.id === model.id);
-  const timePoint = timePlotState?.points.find(point => point.m.id === model.id);
-  const point = source === 'time' ? timePoint : costPoint;
-  const inTable = visibleIndex.has(model.id);
-  const key = [loadedMode, model.id, pinned, inTable, source, costPoint?.front, timePoint?.front].join('|');
-  if (inspectedModel === model && inspectorSnapshot === key) return;
-  inspectedModel = model;
-  inspectorSnapshot = key;
-  const api = loadedMode === 'api';
-  $('inspector').style.setProperty('--model-color', color(model.provider));
-  $('inspectorState').textContent = pinned ? '已固定' : '隨指標查看';
-  $('inspectProvider').textContent = model.provider;
-  $('inspectName').textContent = model.name;
-  $('inspectScore').textContent = fmt(model.score);
-  $('inspectCostLabel').textContent = api ? '混合單價 / 1M tokens（USD）' : '成本 / 任務（USD）';
-  $('inspectCost').textContent = model.cost == null ? '—' : chartCost(model.cost);
-  $('inspectTimeLabel').textContent = api ? '輸出速度（t/s）' : '時間 / 任務（分鐘）';
-  $('inspectTime').textContent = fmt(api ? model.speed : model.time);
-  $('inspectLatency').textContent = fmt(model.latency);
-  $('inspectContext').textContent = model.context ?? '—';
-  $('inspectFrontier').textContent = point?.front ? (source === 'time' ? '位於時間有效前緣' : '位於成本有效前緣') : '';
-  $('inspectFrontier').hidden = !point?.front;
-  $('pinInspection').disabled = false;
-  $('pinInspection').setAttribute('aria-pressed', String(pinned));
-  $('pinInspection').querySelector('span').textContent = pinned ? '解除固定' : '固定此模型';
-  $('findModel').disabled = !inTable;
-  $('inspectNote').textContent = !inTable ? '此模型不在目前的篩選結果內。'
-    : pinned ? '詳情已固定，仍可在任一圖表查看其他模型。' : '點選任一圖表中的模型可固定詳情。';
-  paintPlotEmphasis();
-}
-
-function syncInspector() {
-  const costPoints = plotState?.points ?? [];
-  const timePoints = timePlotState?.points ?? [];
-  if (!costPoints.length && !timePoints.length) {
-    if (models.length && pinnedByMode[loadedMode]) {
-      delete pinnedByMode[loadedMode];
-      savePreferences();
-    }
-    inspectModel(null);
-    return;
-  }
-  let source = inspectedChart;
-  let points = source === 'time' ? timePoints : costPoints;
-  if (!points.length) {
-    source = source === 'time' ? 'cost' : 'time';
-    points = source === 'time' ? timePoints : costPoints;
-  }
-  let point = points.find(point => point.m.id === pinnedByMode[loadedMode]);
-  if (!point && pinnedByMode[loadedMode]) {
-    points = source === 'time' ? costPoints : timePoints;
-    source = source === 'time' ? 'cost' : 'time';
-    point = points.find(point => point.m.id === pinnedByMode[loadedMode]);
-  }
-  if (pinnedByMode[loadedMode] && !point) {
+function updatePinnedStrip(pick = chosen()) {
+  const id = pinnedByMode[loadedMode];
+  const model = pick.find(item => item.id === id);
+  if (id && !model && models.length) {
     delete pinnedByMode[loadedMode];
-    savePreferences();
+    scheduleSavePreferences();
   }
-  point ??= points.find(point => point.m === inspectedModel);
-  point ??= points.reduce((best, candidate) => candidate.m.score > best.m.score ? candidate : best);
-  inspectModel(point.m, source);
+  $('pinnedStrip').hidden = !model;
+  if (!model) return;
+  const missing = !canPlotModel(model, $('chartView').value);
+  $('pinnedSummary').textContent = '已固定 ' + modelSummary(model) + (missing ? '（此視圖缺少數值）' : '');
+  $('pinnedRow').disabled = !visibleIndex.has(id);
 }
 
-function inspectPoint(point) {
-  if (!pinnedByMode[loadedMode]) inspectModel(point.m, 'cost');
-}
-
-function pinModel(model, source = inspectedChart) {
+function pinModel(model) {
   pinnedByMode[loadedMode] = model.id;
-  inspectModel(model, source);
+  updatePinnedStrip();
   paintPlotEmphasis();
+  $('plotReadout').textContent = '已固定 ' + modelSummary(model);
   scheduleSavePreferences();
 }
 
 function clearModelPin() {
+  if (!pinnedByMode[loadedMode]) return;
   delete pinnedByMode[loadedMode];
-  inspectModel(inspectedModel, inspectedChart);
+  updatePinnedStrip();
   paintPlotEmphasis();
+  $('plotReadout').textContent = '已解除固定';
   scheduleSavePreferences();
 }
 
-$('pinInspection').addEventListener('click', () => {
-  if (!inspectedModel) return;
-  if (pinnedByMode[loadedMode] === inspectedModel.id) clearModelPin();
-  else pinModel(inspectedModel, inspectedChart);
-});
-
-$('findModel').addEventListener('click', () => {
-  const id = inspectedModel?.id;
-  if (!id) return;
-  const row = revealModelRow(id);
+$('unpinModel').onclick = () => {
+  clearModelPin();
+  $('chartView').focus({preventScroll: true});
+};
+$('pinnedRow').onclick = () => {
+  const row = revealModelRow(pinnedByMode[loadedMode]);
   if (!row) return;
-  if (inspectedRow?.isConnected) inspectedRow.classList.remove('inspected');
-  inspectedRow = row;
+  pinnedRowElement?.classList.remove('inspected');
+  pinnedRowElement = row;
   row.classList.add('inspected');
   row.querySelector('.model-focus').focus({preventScroll: true});
-});
+};
 
+function updateChartHeading() {
+  const descriptions = {
+    orbit: '同時比較每任務成本、每任務時間與智慧指數。',
+    cost: '越靠左上，每任務成本越低、智慧指數越高。',
+    time: '越靠左上，每任務時間越短、智慧指數越高。'
+  };
+  $('scatterHelp').textContent = descriptions[$('chartView').value];
+}
 
-$('frontierFocus').addEventListener('change', () => {
+function renderChart(pick = chosen()) {
+  const view = $('chartView').value;
+  for (const [mode, toolbar, panel] of [
+    ['orbit', 'orbitToolbar', 'orbitPanel'],
+    ['cost', 'costToolbar', 'scatter'],
+    ['time', 'timeToolbar', 'timeScatter']
+  ]) {
+    $(toolbar).hidden = $(panel).hidden = mode !== view;
+  }
+  updateChartHeading();
+  updatePinnedStrip(pick);
+  if (view === 'cost') renderScatter(pick);
+  else if (view === 'time') renderTimeScatter(pick);
+  else renderOrbit(pick);
   paintPlotEmphasis();
-  scheduleSavePreferences();
-});
-$('timeFrontierFocus').addEventListener('change', () => {
-  paintPlotEmphasis();
-  scheduleSavePreferences();
-});
-$('timeLogScale').addEventListener('change', () => {
-  savePreferences();
-  renderTimeScatter(chosen());
-});
+}
 
-function connectPlotLegend() {
-  const legend = $('scatter').querySelector('.plot-legend');
-  if (!legend) return;
-  const buttons = [...legend.querySelectorAll('[data-provider-focus]')];
+$('chartView').onchange = () => {
   previewProvider = null;
-  legend.addEventListener('pointerover', event => {
-    if (event.pointerType === 'touch') return;
-    const button = event.target.closest('[data-provider-focus]');
-    if (!button || previewProvider === button.dataset.providerFocus) return;
-    previewProvider = button.dataset.providerFocus;
+  hidePlotTip();
+  renderChart();
+  scheduleSavePreferences();
+};
+$('timeLogScale').onchange = () => {
+  scheduleSavePreferences();
+  renderChart();
+};
+for (const id of ['frontierFocus', 'timeFrontierFocus']) {
+  $(id).onchange = () => {
     paintPlotEmphasis();
-  });
-  legend.addEventListener('pointerleave', () => { previewProvider = null; paintPlotEmphasis(); });
-  legend.addEventListener('focusin', event => {
-    previewProvider = event.target.closest('[data-provider-focus]')?.dataset.providerFocus ?? null;
+    scheduleSavePreferences();
+  };
+}
+
+function connectProviderLegend(host) {
+  function buttonAt(event) {
+    return event.target.closest('[data-provider-focus]');
+  }
+  function preview(name) {
+    if (previewProvider === name) return;
+    previewProvider = name;
     paintPlotEmphasis();
+  }
+  host.addEventListener('pointerover', event => {
+    const button = buttonAt(event);
+    if (button && event.pointerType !== 'touch') preview(button.dataset.providerFocus);
   });
-  legend.addEventListener('focusout', () => { previewProvider = null; paintPlotEmphasis(); });
-  legend.addEventListener('click', event => {
-    const button = event.target.closest('[data-provider-focus]');
+  host.addEventListener('pointerout', event => {
+    const button = buttonAt(event);
+    if (button && !button.contains(event.relatedTarget)) preview(null);
+  });
+  host.addEventListener('focusin', event => {
+    const button = buttonAt(event);
+    if (button) preview(button.dataset.providerFocus);
+  });
+  host.addEventListener('focusout', () => preview(null));
+  host.addEventListener('click', event => {
+    const button = buttonAt(event);
     if (!button) return;
     const provider = button.dataset.providerFocus;
     providerSpotlight = providerSpotlight === provider ? null : provider;
     previewProvider = null;
     paintPlotEmphasis();
   });
+}
+for (const id of ['scatter','timeScatter']) {
+  const host = $(id);
+  connectProviderLegend(host);
+  host.addEventListener('wheel', event => {
+    if (event.deltaY && event.target.closest('.plot-window')) event.preventDefault();
+  }, {passive: false});
+}
+
+const defaultOrbit = {yaw: .64, pitch: .36, scale: 1};
+let orbit = {...defaultOrbit};
+let orbitPoints = [];
+let orbitPick;
+let orbitFrame = 0;
+let orbitHovered = null;
+let orbitIndex = -1;
+const orbitCanvas = $('orbitCanvas');
+const orbitContext = orbitCanvas.getContext('2d');
+const orbitPointers = new Map();
+let orbitDragged = false;
+
+function spatialFrontier(data) {
+  return new Set(data.filter(model => !data.some(other =>
+    other.cost <= model.cost && other.time <= model.time && other.score >= model.score &&
+    (other.cost < model.cost || other.time < model.time || other.score > model.score)
+  )).map(model => model.id));
+}
+
+function orbitAxis(values, includeNegative = false) {
+  const min = includeNegative ? Math.min(0, ...values) : 0;
+  const max = Math.max(min === 0 && !values.some(Boolean) ? 1 : .01, ...values);
+  const step = tickStep(min, max, 4);
+  return [Math.floor(min / step) * step, Math.ceil(max / step) * step];
+}
+
+let orbitAxes;
+function renderOrbit(pick) {
+  if ($('chartView').value !== 'orbit') return;
+  if (orbitPick?.length === pick.length && pick.every((model, i) => orbitPick[i] === model)) {
+    queueOrbitDraw();
+    return;
+  }
+  orbitPick = pick;
+  orbitHovered = null;
+  orbitIndex = -1;
+  const data = pick.filter(m => Number.isFinite(m.cost) && m.cost >= 0 &&
+    Number.isFinite(m.time) && m.time >= 0 && Number.isFinite(m.score));
+  const frontier = spatialFrontier(data);
+  orbitAxes = [
+    {title: '成本（USD）', values: orbitAxis(data.map(m => m.cost)), format: chartCost},
+    {title: '智慧指數', values: orbitAxis(data.map(m => m.score), true), format: v => fmt(v, 3)},
+    {title: '時間（分鐘）', values: orbitAxis(data.map(m => m.time)), format: v => fmt(v, 4)}
+  ];
+  orbitPoints = data.map(m => ({
+    m, front: frontier.has(m.id),
+    position: [m.cost, m.score, m.time].map((value, i) => {
+      const [min, max] = orbitAxes[i].values;
+      return value / (max - min) - min / (max - min) - .5;
+    })
+  }));
+  const counts = new Map();
+  for (const model of data) counts.set(model.provider, (counts.get(model.provider) ?? 0) + 1);
+  $('orbitLegend').innerHTML = [...counts].map(([name, count]) =>
+    `<button type="button" class="legend-item" data-provider-focus="${esc(name)}" aria-pressed="false"><i style="background:${color(name)}"></i>${esc(name)} <small>${count}</small></button>`
+  ).join('') + '<span><i class="front-ring"></i>有效前緣</span>';
+  $('orbitLegend').hidden = !data.length;
+  $('orbitCount').textContent = data.length
+    ? `已繪製 ${data.length} 個模型${pick.length > data.length ? `，${pick.length - data.length} 個缺少三維所需數值` : ''}`
+    : pick.length ? '所選模型缺少成本、時間或智慧指數，可切換平面視圖。' : '勾選模型後顯示三維散點圖。';
+  $('orbitEmpty').hidden = !!data.length;
+  orbitCanvas.hidden = !data.length;
   paintPlotEmphasis();
 }
+
+function queueOrbitDraw() {
+  if ($('chartView').value === 'orbit' && !orbitFrame) {
+    orbitFrame = requestAnimationFrame(() => {
+      orbitFrame = 0;
+      if ($('chartView').value === 'orbit') drawOrbit();
+    });
+  }
+}
+
+function drawOrbit() {
+  const available = !!orbitPoints.length;
+  $('orbitIn').disabled = !available || orbit.scale >= 3;
+  $('orbitOut').disabled = !available || orbit.scale <= 1;
+  $('orbitReset').disabled = !available;
+  $('orbitScale').value = Math.round(orbit.scale * 100) + '%';
+  if (!available) return;
+  const width = orbitCanvas.clientWidth, height = orbitCanvas.clientHeight;
+  if (!width || !height) return;
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const pixelWidth = Math.round(width * dpr), pixelHeight = Math.round(height * dpr);
+  if (orbitCanvas.width !== pixelWidth) orbitCanvas.width = pixelWidth;
+  if (orbitCanvas.height !== pixelHeight) orbitCanvas.height = pixelHeight;
+  const ctx = orbitContext;
+  ctx.setTransform(pixelWidth / width, 0, 0, pixelHeight / height, 0, 0);
+  ctx.clearRect(0, 0, width, height);
+  const unit = Math.min(width * .54, height * .62) * orbit.scale;
+  const cosYaw = Math.cos(orbit.yaw), sinYaw = Math.sin(orbit.yaw);
+  const cosPitch = Math.cos(orbit.pitch), sinPitch = Math.sin(orbit.pitch);
+  const project = ([x,y,z]) => {
+    const depth = x * sinYaw + z * cosYaw;
+    return {
+      x: width / 2 + (x * cosYaw - z * sinYaw) * unit,
+      y: height / 2 - (y * cosPitch - depth * sinPitch) * unit,
+      depth: y * sinPitch + depth * cosPitch
+    };
+  };
+  const line = (from, to, stroke) => {
+    const a = project(from), b = project(to);
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.strokeStyle = stroke;
+    ctx.stroke();
+  };
+  for (let axis = 0; axis < 3; axis++) {
+    for (const sideA of [-.5, .5]) for (const sideB of [-.5, .5]) {
+      const from = [-.5, -.5, -.5];
+      from[(axis + 1) % 3] = sideA;
+      from[(axis + 2) % 3] = sideB;
+      const to = [...from]; to[axis] = .5;
+      line(from, to, '#dce5f3');
+    }
+  }
+  for (let step = 1; step < 4; step++) {
+    const v = step / 4 - .5;
+    line([v, -.5, -.5], [v, -.5, .5], '#e8eef7');
+    line([-.5, -.5, v], [.5, -.5, v], '#e8eef7');
+    line([-.5, v, -.5], [.5, v, -.5], '#e8eef7');
+  }
+  orbitAxes.forEach(({title, values, format}, axis) => {
+    // Place labels on the outer edges of the projected box.
+    const candidates = axis === 0 ? [[-.5,-.5,-.5], [-.5,-.5,.5]]
+      : axis === 2 ? [[-.5,-.5,-.5], [.5,-.5,-.5]]
+      : [[-.5,-.5,-.5], [-.5,-.5,.5], [.5,-.5,-.5], [.5,-.5,.5]];
+    candidates.sort((a, b) => axis === 1 ? project(a).x - project(b).x : project(b).y - project(a).y);
+    const origin = candidates[0];
+    const end = [...origin];
+    end[axis] = .5;
+    line(origin, end, '#7890b0');
+    const a = project(origin), b = project(end);
+    const mid = project([0, 0, 0]);
+    const perpendicular = {x: -(b.y - a.y), y: b.x - a.x};
+    const length = Math.hypot(perpendicular.x, perpendicular.y);
+    if (length < 32) return;
+    const sign = (a.x - mid.x) * perpendicular.x + (a.y - mid.y) * perpendicular.y >= 0 ? 1 : -1;
+    const nx = perpendicular.x / length * sign, ny = perpendicular.y / length * sign;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#50617a';
+    ctx.font = '11px system-ui, sans-serif';
+    for (const t of [0, .5, 1]) {
+      if ((length < 120 || axis === 1) && t === .5) continue;
+      ctx.fillText(format(values[0] + (values[1] - values[0]) * t),
+        a.x + (b.x - a.x) * t + nx * 15, a.y + (b.y - a.y) * t + ny * 15);
+    }
+    ctx.font = '600 12px system-ui, sans-serif';
+    ctx.fillText(title, clamp((a.x + b.x) / 2 + nx * 35, 46, width - 46),
+      clamp((a.y + b.y) / 2 + ny * 35, 13, height - 13));
+  });
+
+  const pinned = pinnedByMode[loadedMode];
+  const provider = previewProvider ?? providerSpotlight;
+  const frontOnly = $('orbitFrontierFocus').checked;
+  const ordered = orbitPoints.map(point => Object.assign(point, project(point.position)))
+    .sort((a, b) => a.depth - b.depth);
+  const drawPoint = point => {
+    const emphasized = point.m.id === pinned || point === orbitHovered;
+    ctx.globalAlpha = !emphasized && ((provider && provider !== point.m.provider) || (frontOnly && !point.front)) ? .17 : 1;
+    ctx.strokeStyle = color(point.m.provider);
+    if (point.front || emphasized) {
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, emphasized ? 10 : 7.5, 0, 2 * Math.PI);
+      ctx.lineWidth = emphasized ? 2 : 1;
+      ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, emphasized ? 5.5 : 4.3, 0, 2 * Math.PI);
+    ctx.fillStyle = color(point.m.provider);
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  };
+  ordered.forEach(drawPoint);
+  const pinnedPoint = ordered.find(point => point.m.id === pinned);
+  if (pinnedPoint) drawPoint(pinnedPoint);
+  if (orbitHovered && orbitHovered !== pinnedPoint) drawPoint(orbitHovered);
+  ctx.globalAlpha = 1;
+}
+
+function setOrbit(next) {
+  orbit = {...next, yaw: next.yaw % (2 * Math.PI), pitch: clamp(next.pitch, -.95, 1.1), scale: clamp(next.scale, 1, 3)};
+  hidePlotTip();
+  queueOrbitDraw();
+  scheduleSavePreferences();
+}
+
+function orbitHit(event) {
+  const rect = orbitCanvas.getBoundingClientRect();
+  const x = event.clientX - rect.left, y = event.clientY - rect.top;
+  let nearest = null, best = 15 ** 2;
+  for (const point of orbitPoints) {
+    const distance = (point.x - x) ** 2 + (point.y - y) ** 2;
+    if (distance < best || (distance === best && point.depth > nearest?.depth)) {
+      nearest = point;
+      best = distance;
+    }
+  }
+  return nearest;
+}
+
+orbitCanvas.addEventListener('wheel', event => {
+  if (!event.deltaY) return;
+  event.preventDefault();
+  const multiplier = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? orbitCanvas.clientHeight : 1;
+  const scale = clamp(orbit.scale * Math.exp(-clamp(event.deltaY * multiplier, -210, 210) * .003), 1, 3);
+  if (scale !== orbit.scale) setOrbit({...orbit, scale});
+}, {passive: false});
+
+orbitCanvas.addEventListener('pointerdown', event => {
+  if (event.button !== 0 || orbitPointers.size >= 2) return;
+  if (!orbitPointers.size) orbitDragged = false;
+  else orbitDragged = true;
+  orbitPointers.set(event.pointerId, {x: event.clientX, y: event.clientY});
+  orbitCanvas.setPointerCapture(event.pointerId);
+});
+
+orbitCanvas.addEventListener('pointermove', event => {
+  const next = {x: event.clientX, y: event.clientY};
+  const previous = orbitPointers.get(event.pointerId);
+  if (!previous) {
+    if (orbitPointers.size || event.pointerType === 'touch') return;
+    const hit = orbitHit(event);
+    if (hit === orbitHovered) return;
+    if (hit) showModelTip(hit, next.x, next.y);
+    else hidePlotTip();
+    orbitHovered = hit;
+    queueOrbitDraw();
+    return;
+  }
+  const dx = next.x - previous.x, dy = next.y - previous.y;
+  if (!orbitDragged && Math.hypot(dx, dy) < 4) return;
+  orbitDragged = true;
+  const second = [...orbitPointers.entries()].find(([id]) => id !== event.pointerId)?.[1];
+  if (second) {
+    const ratio = Math.hypot(next.x - second.x, next.y - second.y) /
+      Math.max(1, Math.hypot(previous.x - second.x, previous.y - second.y));
+    setOrbit({...orbit, scale: orbit.scale * ratio});
+  } else {
+    setOrbit({...orbit, yaw: orbit.yaw + dx * .009, pitch: orbit.pitch - dy * .007});
+  }
+  orbitPointers.set(event.pointerId, next);
+});
+
+function finishOrbitPointer(event) {
+  if (!orbitPointers.delete(event.pointerId) || orbitPointers.size || orbitDragged || event.type !== 'pointerup') return;
+  const hit = orbitHit(event);
+  if (hit) {
+    pinModel(hit.m);
+    showModelTip(hit, event.clientX, event.clientY);
+  } else hidePlotTip();
+}
+for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+  orbitCanvas.addEventListener(event, finishOrbitPointer);
+}
+orbitCanvas.addEventListener('pointerleave', () => { if (!orbitPointers.size) hidePlotTip(); });
+orbitCanvas.addEventListener('blur', hidePlotTip);
+
+orbitCanvas.addEventListener('keydown', event => {
+  const {key, shiftKey} = event;
+  if (key === 'Escape') { clearModelPin(); hidePlotTip(); return; }
+  if (key === 'Enter' && orbitPoints[orbitIndex]) { event.preventDefault(); pinModel(orbitPoints[orbitIndex].m); return; }
+  if (key === '0') { event.preventDefault(); setOrbit(defaultOrbit); return; }
+  if (['+','=','-'].includes(key)) {
+    event.preventDefault();
+    setOrbit({...orbit, scale: orbit.scale * (key === '-' ? 1 / 1.25 : 1.25)});
+    return;
+  }
+  if (!['ArrowRight','ArrowLeft','ArrowUp','ArrowDown','Home','End'].includes(key)) return;
+  event.preventDefault();
+  if (shiftKey && key.startsWith('Arrow')) {
+    setOrbit({...orbit,
+      yaw: orbit.yaw + (key === 'ArrowRight' ? .15 : key === 'ArrowLeft' ? -.15 : 0),
+      pitch: orbit.pitch + (key === 'ArrowUp' ? .12 : key === 'ArrowDown' ? -.12 : 0)});
+    return;
+  }
+  if (!orbitPoints.length) return;
+  const backward = key === 'ArrowLeft' || key === 'ArrowUp';
+  const n = orbitPoints.length;
+  if (key === 'Home') orbitIndex = 0;
+  else if (key === 'End') orbitIndex = n - 1;
+  else if (orbitIndex < 0) orbitIndex = backward ? n - 1 : 0;
+  else orbitIndex = (orbitIndex + (backward ? -1 : 1) + n) % n;
+  orbitHovered = orbitPoints[orbitIndex];
+  const rect = orbitCanvas.getBoundingClientRect();
+  showModelTip(orbitHovered, rect.left + orbitHovered.x, rect.top + orbitHovered.y);
+  $('plotReadout').textContent = modelSummary(orbitHovered.m);
+  queueOrbitDraw();
+});
+$('orbitIn').onclick = () => setOrbit({...orbit, scale: orbit.scale * 1.25});
+$('orbitOut').onclick = () => setOrbit({...orbit, scale: orbit.scale / 1.25});
+$('orbitReset').onclick = () => setOrbit(defaultOrbit);
+$('orbitFrontierFocus').onchange = () => { queueOrbitDraw(); scheduleSavePreferences(); };
+connectProviderLegend($('orbitLegend'));
 
 // Navigation reflects whichever destination is nearest the reading position.
 const navigation = [...document.querySelectorAll('.masthead nav a')];
@@ -2256,7 +2468,7 @@ const sectionObserver = new IntersectionObserver(entries => {
     else link.removeAttribute('aria-current');
   });
 }, {rootMargin: '-15% 0px -40% 0px'});
-for (const id of ['chart', 'timeChart', 'setup', 'database']) sectionObserver.observe($(id));
+for (const id of ['chart', 'setup', 'database']) sectionObserver.observe($(id));
 
 $('refresh').onclick = load;
 $('sourceType').onchange = () => {
@@ -2281,8 +2493,7 @@ for (const id of ['search', 'exclude', 'match', 'minScore', 'maxCost', 'selected
 for (const id of ['logScale', 'zoom']) {
   $(id).onchange = () => {
     savePreferences();
-    renderScatter(chosen());
-    renderTimeScatter(chosen());
+    renderChart();
   };
 }
 $('auto').onchange = savePreferences;
@@ -2357,6 +2568,7 @@ window.addEventListener('pagehide', () => {
 });
 $('export').onclick=()=>{let data=chosen().length?chosen():visible();if(!data.length)return notify('尚無可匯出的資料');const api=loadedMode==='api',lines=[['Provider','Model','Intelligence',api?'Blended USD per 1M tokens (3:1)':'USD per task',api?'Output tokens per second':'Minutes per task','Latency seconds',api?'Output USD per 1M tokens':'Error percent','Context','Fetched at','Source'],...data.map(m=>[m.provider,m.name,m.score,m.cost,api?m.speed:m.time,m.latency,api?m.output:m.error,m.context,lastFetched.toISOString(),m.source])];const csv='\ufeff'+lines.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""').replace(/^[=+@\-\t\r]/,"'")+'"').join(',')).join('\r\n'),url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='model-lens-'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);notify('已匯出 '+data.length+' 個模型，不含 API 金鑰')};
 restorePreferences();
+renderChart();
 setInterval(()=>{if($('auto').checked&&!document.hidden)load()},15*60*1000);renderProviders();render();load();
 
   </script>
