@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="使用虛構資料探索模型成本、任務時間與智慧指數。">
-  <title>Model Lens｜互動展示</title>
+  <meta name="description" content="比較 Artificial Analysis 的模型智慧指數、使用成本與效率。">
+  <title>Model Lens</title>
   <style>
 :root {
   color-scheme: light;
@@ -389,10 +389,26 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8p
   <main id="main" class="shell">
     <div class="source-desk" aria-label="資料來源與擷取">
       <div class="source-head">
-        <div class="source-label"><span>資料來源</span><strong>互動展示</strong></div>
+        <div class="source-label"><span>資料來源</span><strong>Artificial Analysis</strong></div>
+        <div class="source-controls">
+          <label class="sr-only" for="sourceType">資料來源模式</label>
+          <select id="sourceType">
+            <option value="web">原網頁即時表格</option>
+          </select>
+          <button type="button" class="primary" id="refresh"><svg aria-hidden="true" viewBox="0 0 20 20"><path d="M16.5 7a7 7 0 1 0 .5 5M17 2v5h-5"/></svg>重新擷取</button>
+        </div>
       </div>
       <div class="source-bottom">
-        <p class="connection-summary">此頁使用虛構模型與數值，供體驗圖表與篩選。</p>
+        <div id="connectionSummary" class="connection-summary" role="status" aria-live="polite">準備連線</div>
+        <details class="source-details">
+          <summary>連線與資料說明</summary>
+          <div id="status" class="status" role="status">準備連線至 Artificial Analysis。</div>
+          <div class="source-explainer">
+            <p>原網頁模式先連線至 Artificial Analysis。若直連失敗，改用 Jina Reader 讀取公開頁面，兩者皆不傳送 API 金鑰。</p>
+            <p>若來源改版或連線受到限制，擷取狀態會顯示原因。</p>
+            <p>商用或對外轉散資料前，請確認 Artificial Analysis 的使用規範。</p>
+          </div>
+        </details>
       </div>
     </div>
 
@@ -486,18 +502,18 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8p
             <div id="providers"></div>
             <div class="actions provider-actions">
               <button id="providerAll" type="button">全供應商</button>
-              <button id="providerPair" type="button">Aster + Boreal</button>
+              <button id="providerPair" type="button">OpenAI + Anthropic</button>
             </div>
           </fieldset>
 
           <div class="filter-grid">
             <div>
               <label for="search" class="field">包含字串</label>
-              <input id="search" type="search" placeholder="如 aster, boreal" aria-describedby="filterHelp">
+              <input id="search" type="search" placeholder="如 gpt, claude" aria-describedby="filterHelp">
             </div>
             <div>
               <label for="exclude" class="field">排除字串</label>
-              <input id="exclude" type="search" placeholder="如 lite, swift" aria-describedby="filterHelp">
+              <input id="exclude" type="search" placeholder="如 mini, beta" aria-describedby="filterHelp">
             </div>
             <div class="wide">
               <label for="match" class="field">包含條件</label>
@@ -517,6 +533,7 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8p
             </div>
           </div>
           <div class="setup-foot">
+            <label class="checks"><input id="auto" type="checkbox">每 15 分鐘更新</label>
             <button type="button" id="reset">重設篩選</button>
           </div>
         </div>
@@ -571,7 +588,10 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8p
       </section>
     </div>
 
-    <footer><span>Model Lens 互動展示。模型名稱與數值皆為虛構。</span></footer>
+    <footer>
+      <span>資料來源為 <a href="https://artificialanalysis.ai/providers/openai#cache-behaviour" target="_blank" rel="noopener noreferrer">Artificial Analysis</a>。Model Lens 為非官方工具。</span>
+      <a href="https://artificialanalysis.ai/data-api/docs" target="_blank" rel="noopener noreferrer">API 文件與使用規範</a>
+    </footer>
   </main>
   <div id="plotTip" class="plot-tip" role="tooltip"></div>
   <div id="plotReadout" class="sr-only" aria-live="polite"></div>
@@ -579,9 +599,10 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8p
   <script>
 
 'use strict';
-const SOURCES=[['openai','Aster','#285baa'],['anthropic','Boreal','#a85428'],['google','Cinder','#007765'],['deepseek','Delta','#6945a5'],['meta','Eon','#677318']];
+const SOURCE='https://artificialanalysis.ai/providers/';
+const SOURCES=[['openai','OpenAI','#285baa'],['anthropic','Anthropic','#a85428'],['google','Google','#007765'],['deepseek','DeepSeek','#6945a5'],['meta','Meta','#677318']];
 const $=id=>document.getElementById(id),color=p=>SOURCES.find(s=>s[1]===p)?.[2]||'#556770';
-let models=[],selected=new Set(),providerSet=new Set(SOURCES.map(source => source[1])),busy=false,loadedMode='web',lastFetched=null,anchor=null,drag=null,everLoaded=false;
+let models=[],selected=new Set(),providerSet=new Set(['OpenAI','Anthropic']),busy=false,loadedMode='web',lastFetched=null,anchor=null,drag=null,everLoaded=false;
 let sortKey='score',sortDir='desc';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num=v=>{if(v==null||v==='')return null;const n=Number(String(v).replace(/[$,%\s,]/g,''));return Number.isFinite(n)?n:null};
@@ -593,33 +614,20 @@ const fmt = (value, digits = 2) => {
 };
 const money=v=>v==null?'—':'$'+fmt(v),empty=(a,b)=>'<div class="empty"><strong>'+esc(a)+'</strong><span>'+esc(b)+'</span></div>';
 function notify(s){$('toast').textContent=s;setTimeout(()=>$('toast').textContent='',3500)}
-function loadDemo() {
-  const demoRows = [
-    ['Aster One', 52, 0.82, 2.7], ['Aster Pro', 71, 3.6, 4.2],
-    ['Aster Max', 85, 7.5, 5.1], ['Aster Swift', 60, 1.2, 1.6],
-    ['Boreal Lite', 45, 0.29, 0.85], ['Boreal Core', 63, 1.1, 2.2],
-    ['Boreal Plus', 76, 3.1, 2.8], ['Boreal Ultra', 82, 5.9, 3.2],
-    ['Cinder Quick', 42, 0.18, 0.5], ['Cinder One', 58, 0.85, 1.1],
-    ['Cinder Pro', 74, 2.8, 1.9], ['Cinder Max', 88, 8.2, 4.7],
-    ['Delta Micro', 35, 0.08, 0.42], ['Delta Flow', 55, 0.57, 0.95],
-    ['Delta Think', 69, 1.9, 3.4], ['Delta Prime', 79, 4.5, 2.5],
-    ['Eon Lite', 48, 0.44, 1.2], ['Eon Core', 66, 1.5, 1.8],
-    ['Eon Focus', 72, 2.5, 2.15], ['Eon Peak', 91, 10.4, 5.5]
-  ];
-  models = demoRows.map(([name, score, cost, time], index) => ({
-    id: name, name, provider: SOURCES[Math.floor(index / 4)][1],
-    score, cost, time, latency: null, error: null, context: '—', source: 'Synthetic demo'
-  }));
-  lastFetched = new Date();
-  restoreSelection('web');
-  updateLabels();
-  renderProviders();
-  render();
+function parseWeb(html,provider){const doc=new DOMParser().parseFromString(html,'text/html'),table=[...doc.querySelectorAll('table')].find(t=>t.textContent.includes('Cost per Task')&&t.textContent.includes('Intelligence'));if(!table)throw Error(provider+' 表格格式已變更');const out=[...table.querySelectorAll('tr')].map(r=>{let c=[...r.querySelectorAll('td')];if(c.length<10)return null;let t=c.map(c=>c.textContent.trim());return{id:provider+'::'+t[0],provider,name:t[0],score:num(t[1]),cost:num(t[2]),time:num(t[3]),latency:num(t[4]),error:num(t[5]),context:t[6],license:t[9]||'—',source:SOURCE+SOURCES.find(s=>s[1]===provider)?.[0]}}).filter(m=>m&&m.name);if(!out.length)throw Error(provider+' 無可解析資料');return out}
+// Reader only receives a public page URL. Never forward API credentials here.
+async function loadProvider(slug,name){
+ try{return parseWeb(await request(SOURCE+slug),name)}catch(directError){
+  try{return parseWeb(await request('https://r.jina.ai/'+SOURCE+slug,true),name).map(m=>({...m,transport:'reader'}))}
+  catch(readerError){throw Error(name+'：原站 '+(directError instanceof TypeError?'跨來源連線失敗':directError.message)+'；中繼 '+(readerError instanceof TypeError?'跨來源連線失敗':readerError.message))}
+ }
 }
+async function request(url,reader=false){const c=new AbortController(),t=setTimeout(()=>c.abort(),35000);try{let r=await fetch(url,{headers:reader?{'X-No-Cache':'true','X-Return-Format':'html'}:{},signal:c.signal,credentials:'omit',cache:'no-store',redirect:'error'});if(!r.ok)throw Error('HTTP '+r.status+(r.status===429?'，請稍後重試':''));return await r.text()}finally{clearTimeout(t)}}
+async function load(){if(busy)return;busy=true;$('sourceType').disabled=true;$('refresh').disabled=true;$('refresh').textContent='擷取中…';const mode='web';$('status').className='status';$('status').textContent='正在擷取 '+(mode==='web'?'供應商即時表格（原站無法直連時，自動改用公開頁中繼）':'官方 API')+'，不使用離線快照…';try{let data=[],fail=[];if(mode==='web'){let results=await Promise.allSettled(SOURCES.map(([slug,name])=>loadProvider(slug,name)));results.forEach((r,i)=>r.status==='fulfilled'?data.push(...r.value):fail.push(SOURCES[i][1]+'（'+(r.reason.name==='AbortError'?'逾時':r.reason instanceof TypeError?'網路 / CORS':r.reason.message)+'）'))}if(!data.length)throw Error(fail.join('；')||'來源未提供模型');models=[...new Map(data.map(m=>[m.id,m])).values()];loadedMode=mode;lastFetched=new Date();restoreSelection(mode);anchor=null;$('status').className='status '+(fail.length?'error':'ok');$('status').textContent=(fail.length?'部分來源失敗：'+fail.join('、')+'。失敗來源未混用舊資料。 ':'已連線。 ')+models.length+' 個模型 / '+new Set(models.map(m=>m.provider)).size+' 個供應商 · 擷取 '+lastFetched.toLocaleString('zh-TW')+'。'+(models.some(m=>m.transport==='reader')?'部分或全部經 Jina Reader 即時讀取公開頁（要求略過快取；不傳送 API 金鑰）。':'原站直接讀取。')+'來源更新時間未提供，可能有上游快取延遲。';updateLabels();renderProviders();render()}catch(e){$('status').className='status error';$('status').textContent='擷取失敗：'+(e.name==='AbortError'?'連線逾時':e instanceof TypeError?'網路或跨來源連線受阻。':e.message)+(models.length?' 仍顯示 '+lastFetched.toLocaleString('zh-TW')+' 擷取的舊資料（'+(loadedMode==='web'?'原網頁':'API')+'模式），不是本次結果。':' 未載入任何離線資料。')}finally{busy=false;$('sourceType').disabled=false;$('refresh').disabled=false;$('refresh').textContent='重新擷取'}}
 
-const preferenceKey = 'model-lens.demo.preferences.v1';
-const valueFields = ['search', 'exclude', 'match', 'minScore', 'maxCost', 'zoom'];
-const checkFields = ['selectedOnly', 'logScale', 'frontierFocus', 'timeLogScale', 'timeFrontierFocus'];
+const preferenceKey = 'model-lens.preferences.v1';
+const valueFields = ['sourceType', 'search', 'exclude', 'match', 'minScore', 'maxCost', 'zoom'];
+const checkFields = ['selectedOnly', 'auto', 'logScale', 'frontierFocus', 'timeLogScale', 'timeFrontierFocus'];
 const selectionByMode = {};
 const viewByMode = {};
 const timeViewByMode = {};
@@ -645,7 +653,7 @@ function restorePreferences() {
     return;
   }
   if (!saved || typeof saved !== 'object') return;
-  const allowed = {match: ['any', 'all'], zoom: ['0', '1500', '2000']};
+  const allowed = {sourceType: ['web'], match: ['any', 'all'], zoom: ['0', '1500', '2000']};
   for (const id of valueFields) {
     const value = saved.values?.[id];
     if (typeof value === 'string' && (!allowed[id] || allowed[id].includes(value))) $(id).value = value;
@@ -701,7 +709,7 @@ function restoreSelection(mode) {
   } else {
     selected = new Set();
     if (!everLoaded) {
-      for (const provider of ['Aster', 'Boreal']) {
+      for (const provider of ['OpenAI', 'Anthropic']) {
         models.filter(model => model.provider === provider)
           .sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
           .slice(0, 2).forEach(model => selected.add(model.id));
@@ -2027,6 +2035,23 @@ window.addEventListener('resize', () => {
 });
 
 // Keep the source's full response visible in the expandable connection record.
+function updateConnectionSummary() {
+  const status = $('status'), summary = $('connectionSummary');
+  let text = '正在連線至資料來源';
+  let state = 'loading';
+  if (status.classList.contains('ok')) {
+    text = `${fmt(models.length, 0)} 個模型　擷取於 ${lastFetched.toLocaleTimeString('zh-TW', {hour12: false, hour: '2-digit', minute: '2-digit'})}`;
+    state = 'ready';
+  } else if (status.classList.contains('error')) {
+    const partial = status.textContent.startsWith('部分來源失敗');
+    text = partial ? `部分來源連線失敗，已取得 ${fmt(models.length, 0)} 個模型`
+      : models.length ? '更新失敗，目前顯示上次擷取的資料' : '連線失敗，請查看連線紀錄或重新擷取';
+    state = 'error';
+  }
+  summary.textContent = text;
+  summary.dataset.state = state;
+}
+new MutationObserver(updateConnectionSummary).observe($('status'), {childList: true, attributes: true, attributeFilter: ['class']});
 // View-only exploration state. Source data and selection remain authoritative.
 let inspectedModel = null;
 let inspectedChart = 'cost';
@@ -2233,6 +2258,11 @@ const sectionObserver = new IntersectionObserver(entries => {
 }, {rootMargin: '-15% 0px -40% 0px'});
 for (const id of ['chart', 'timeChart', 'setup', 'database']) sectionObserver.observe($(id));
 
+$('refresh').onclick = load;
+$('sourceType').onchange = () => {
+  savePreferences();
+  load();
+};
 
 let filterRenderTimer = 0;
 for (const id of ['search', 'exclude', 'match', 'minScore', 'maxCost', 'selectedOnly']) {
@@ -2255,6 +2285,7 @@ for (const id of ['logScale', 'zoom']) {
     renderTimeScatter(chosen());
   };
 }
+$('auto').onchange = savePreferences;
 
 $('clear').onclick = () => {
   if (everLoaded) selectionByMode[loadedMode] = [];
@@ -2284,7 +2315,7 @@ $('providerAll').onclick = () => {
   render();
 };
 $('providerPair').onclick = () => {
-  providerSet = new Set(['Aster', 'Boreal']);
+  providerSet = new Set(['OpenAI', 'Anthropic']);
   tableWrap.scrollTop = 0;
   scheduleSavePreferences();
   renderProviders();
@@ -2324,9 +2355,9 @@ window.addEventListener('pagehide', () => {
   }
   savePreferences();
 });
-$('export').onclick=()=>{let data=chosen().length?chosen():visible();if(!data.length)return notify('尚無可匯出的資料');const api=loadedMode==='api',lines=[['Provider','Model','Intelligence',api?'Blended USD per 1M tokens (3:1)':'USD per task',api?'Output tokens per second':'Minutes per task','Latency seconds',api?'Output USD per 1M tokens':'Error percent','Context','Demo loaded at','Source'],...data.map(m=>[m.provider,m.name,m.score,m.cost,api?m.speed:m.time,m.latency,api?m.output:m.error,m.context,lastFetched.toISOString(),m.source])];const csv='\ufeff'+lines.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""').replace(/^[=+@\-\t\r]/,"'")+'"').join(',')).join('\r\n'),url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='model-lens-demo-'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);notify('已匯出 '+data.length+' 個示範模型')};
+$('export').onclick=()=>{let data=chosen().length?chosen():visible();if(!data.length)return notify('尚無可匯出的資料');const api=loadedMode==='api',lines=[['Provider','Model','Intelligence',api?'Blended USD per 1M tokens (3:1)':'USD per task',api?'Output tokens per second':'Minutes per task','Latency seconds',api?'Output USD per 1M tokens':'Error percent','Context','Fetched at','Source'],...data.map(m=>[m.provider,m.name,m.score,m.cost,api?m.speed:m.time,m.latency,api?m.output:m.error,m.context,lastFetched.toISOString(),m.source])];const csv='\ufeff'+lines.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""').replace(/^[=+@\-\t\r]/,"'")+'"').join(',')).join('\r\n'),url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='model-lens-'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);notify('已匯出 '+data.length+' 個模型，不含 API 金鑰')};
 restorePreferences();
-loadDemo();
+setInterval(()=>{if($('auto').checked&&!document.hidden)load()},15*60*1000);renderProviders();render();load();
 
   </script>
 </body>
