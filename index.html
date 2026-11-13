@@ -332,7 +332,7 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8p
 #orbitFit { border-left: 1px solid var(--line); }
 #orbitCanvas:focus-visible { outline-offset: -3px; }
 #orbitEmpty { min-height: 245px; color: var(--muted); padding: 20px; text-align: center; }
-#orbitScale { padding-inline: 8px; font: 11px var(--digits); }
+#orbitScale { padding-inline: 8px; min-width: 8ch; text-align: center; font: 11px var(--digits); }
 #orbitReset { border-left: 1px solid var(--line); }
 #orbitToolbar, #timeToolbar { display: flex; justify-content: space-between; }
 #pinnedStrip { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 12px 22px; border-top: 1px solid var(--line); background: var(--accent-light); font-size: 12px; }
@@ -467,10 +467,10 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8p
             <div id="orbitLegend" class="plot-legend"></div>
             <p id="orbitCount" class="side-note"></p>
           </div>
-          <p id="orbitHelp" class="side-note plot-explainer">右鍵拖曳旋轉，中鍵或 Ctrl＋右鍵拖曳平移，滾輪以游標為中心縮放。左鍵點選可固定模型。觸控可單指旋轉、雙指平移與縮放。</p>
+          <p id="orbitHelp" class="side-note plot-explainer">右鍵從資料點開始拖曳，即可繞該點旋轉。中鍵或 Ctrl＋右鍵拖曳平移，滾輪以游標為中心縮放。左鍵固定模型，按 F 置中。</p>
           <details class="plot-help side-note">
             <summary>鍵盤操作與有效前緣</summary>
-            <p id="orbitKeys">方向鍵切換模型，Shift＋方向鍵旋轉，Ctrl＋Shift＋方向鍵平移。＋／− 縮放，F 置中，0 重設。Enter 固定模型，Esc 解除固定。</p>
+            <p id="orbitKeys">方向鍵切換模型，Shift＋方向鍵旋轉，Ctrl＋Shift＋方向鍵平移。＋／− 縮放，F 置中，0 重設。Enter 固定模型，Esc 解除固定。觸控可單指旋轉、雙指平移與縮放。</p>
             <p>有效前緣上的模型，沒有其他已選模型能同時達到成本不高、時間不長、智慧指數不低，且至少一項更好。</p>
           </details>
         </div>
@@ -2018,12 +2018,14 @@ function modelSummary(model) {
 function showModelTip(point, cx, cy, peers = []) {
   const {m, front} = point;
   const tip = $('plotTip');
+  const precise = $('chartView').value === 'orbit';
+  const cost = m.cost == null ? '—' : precise ? '$' + fmt(m.cost, 8) : chartCost(m.cost);
   tip.innerHTML = `<div class="tip-provider">${esc(m.provider)}${front ? '｜有效前緣' : ''}</div>
     <strong>${esc(m.name)}</strong>
     <div class="tip-values">
-      <div><span>智慧指數</span><b>${fmt(m.score, 3)}</b></div>
-      <div><span>成本 / 任務</span><b>${m.cost == null ? '—' : chartCost(m.cost)}</b></div>
-      <div><span>時間 / 任務</span><b>${m.time == null ? '—' : fmt(m.time, 4) + ' 分鐘'}</b></div>
+      <div><span>智慧指數</span><b>${fmt(m.score, precise ? 8 : 3)}</b></div>
+      <div><span>成本 / 任務</span><b>${cost}</b></div>
+      <div><span>時間 / 任務</span><b>${m.time == null ? '—' : fmt(m.time, precise ? 8 : 4) + ' 分鐘'}</b></div>
     </div>
     ${peers.length ? `<div class="tip-peer"><span class="tip-provider">相同座標的模型（${peers.length}）</span>
       ${peers.slice(0, 5).map(peer => `<strong>${esc(peer.m.name)}</strong>`).join('')}
@@ -2184,6 +2186,7 @@ for (const id of ['scatter','timeScatter']) {
   }, {passive: false});
 }
 
+const maxOrbitScale = 1024;
 const defaultOrbit = {yaw: .64, pitch: .36, scale: 1, panX: 0, panY: 0};
 let orbit = {...defaultOrbit};
 let orbitPoints = [];
@@ -2197,8 +2200,9 @@ const orbitPointers = new Map();
 let orbitDragged = false;
 
 function constrainOrbit(view) {
-  const scale = clamp(view.scale, 1, 3);
-  const limit = scale * .85;
+  const scale = clamp(view.scale, 1, maxOrbitScale);
+  // Allow a corner of the projected cube to stay under a cursor near the viewport edge.
+  const limit = scale * Math.sqrt(3) / 2 + 4;
   return {
     yaw: view.yaw % (2 * Math.PI),
     pitch: clamp(view.pitch, -Math.PI / 2, Math.PI / 2),
@@ -2221,11 +2225,63 @@ function orbitProjection(view) {
   };
 }
 
+function orbitScreenProjection(width, height, project = orbitProjection(orbit)) {
+  const unit = orbitUnit(width, height);
+  return position => {
+    const point = project(position);
+    return {
+      x: width / 2 + (point.x * orbit.scale + orbit.panX) * unit,
+      y: height / 2 + (point.y * orbit.scale + orbit.panY) * unit,
+      depth: point.depth
+    };
+  };
+}
+
+function visibleOrbitPivot() {
+  const width = orbitCanvas.clientWidth, height = orbitCanvas.clientHeight;
+  const visible = orbitPoints.filter(point =>
+    point.x >= 0 && point.x <= width && point.y >= 0 && point.y <= height
+  );
+  if (visible.length) {
+    return [0, 1, 2].map(axis => {
+      const values = visible.map(point => point.position[axis]);
+      return (Math.min(...values) + Math.max(...values)) / 2;
+    });
+  }
+  if (!orbitPoints.length) return [0, 0, 0];
+
+  // In a gap between points, rotate about the screen center at a nearby point's depth.
+  const project = orbitProjection(orbit);
+  const x = -orbit.panX / orbit.scale, y = -orbit.panY / orbit.scale;
+  let depth = 0, nearest = Infinity;
+  for (const point of orbitPoints) {
+    const projected = project(point.position);
+    const distance = (projected.x - x) ** 2 + (projected.y - y) ** 2;
+    if (distance >= nearest) continue;
+    nearest = distance;
+    depth = projected.depth;
+  }
+  const cY = Math.cos(orbit.yaw), sY = Math.sin(orbit.yaw);
+  const cP = Math.cos(orbit.pitch), sP = Math.sin(orbit.pitch);
+  const horizontalDepth = y * sP + depth * cP;
+  return [x * cY + horizontalDepth * sY, depth * sP - y * cP, horizontalDepth * cY - x * sY];
+}
+
+function rotateOrbit(yaw, pitch, pivot) {
+  const next = constrainOrbit({...orbit, yaw, pitch});
+  const before = orbitProjection(orbit)(pivot);
+  const after = orbitProjection(next)(pivot);
+  setOrbit({...next,
+    panX: orbit.panX + (before.x - after.x) * orbit.scale,
+    panY: orbit.panY + (before.y - after.y) * orbit.scale
+  });
+}
+
 function zoomOrbit(factor, before, after = before) {
   const rect = orbitCanvas.getBoundingClientRect();
   const unit = orbitUnit(rect.width, rect.height);
   if (!unit) return;
-  const scale = clamp(orbit.scale * factor, 1, 3);
+  const scale = clamp(orbit.scale * factor, 1, maxOrbitScale);
   const ratio = scale / orbit.scale;
   const x = (before.x - rect.left - rect.width / 2) / unit;
   const y = (before.y - rect.top - rect.height / 2) / unit;
@@ -2308,7 +2364,7 @@ function queueOrbitDraw() {
 
 function drawOrbit() {
   const available = !!orbitPoints.length;
-  $('orbitIn').disabled = !available || orbit.scale >= 3;
+  $('orbitIn').disabled = !available || orbit.scale >= maxOrbitScale;
   $('orbitOut').disabled = !available || orbit.scale <= 1;
   $('orbitReset').disabled = !available;
   $('orbitFit').disabled = !available;
@@ -2324,16 +2380,8 @@ function drawOrbit() {
   const ctx = orbitContext;
   ctx.setTransform(pixelWidth / width, 0, 0, pixelHeight / height, 0, 0);
   ctx.clearRect(0, 0, width, height);
-  const unit = orbitUnit(width, height);
   const projection = orbitProjection(orbit);
-  const project = position => {
-    const point = projection(position);
-    return {
-      x: width / 2 + (point.x * orbit.scale + orbit.panX) * unit,
-      y: height / 2 + (point.y * orbit.scale + orbit.panY) * unit,
-      depth: point.depth
-    };
-  };
+  const project = orbitScreenProjection(width, height, projection);
   drawViewCube(projection);
   const line = (from, to, stroke) => {
     const a = project(from), b = project(to);
@@ -2385,15 +2433,20 @@ function drawOrbit() {
         a.x + (b.x - a.x) * t + nx * 15, a.y + (b.y - a.y) * t + ny * 15);
     }
     ctx.font = '600 12px system-ui, sans-serif';
-    ctx.fillText(title, clamp((a.x + b.x) / 2 + nx * 35, 46, width - 46),
-      clamp((a.y + b.y) / 2 + ny * 35, 13, height - 13));
+    const labelX = (a.x + b.x) / 2 + nx * 35;
+    const labelY = (a.y + b.y) / 2 + ny * 35;
+    if (labelX >= 0 && labelX <= width && labelY >= 0 && labelY <= height) {
+      ctx.fillText(title, clamp(labelX, 46, width - 46), clamp(labelY, 13, height - 13));
+    }
   });
 
   const pinned = pinnedByMode[loadedMode];
   const provider = previewProvider ?? providerSpotlight;
   const frontOnly = $('orbitFrontierFocus').checked;
+  const inFrame = point => point.x >= -12 && point.x <= width + 12 &&
+    point.y >= -12 && point.y <= height + 12;
   const ordered = orbitPoints.map(point => Object.assign(point, project(point.position)))
-    .sort((a, b) => a.depth - b.depth);
+    .filter(inFrame).sort((a, b) => a.depth - b.depth);
   const drawPoint = point => {
     const emphasized = point.m.id === pinned || point === orbitHovered;
     ctx.globalAlpha = !emphasized && ((provider && provider !== point.m.provider) || (frontOnly && !point.front)) ? .17 : 1;
@@ -2415,8 +2468,23 @@ function drawOrbit() {
   ordered.forEach(drawPoint);
   const pinnedPoint = ordered.find(point => point.m.id === pinned);
   if (pinnedPoint) drawPoint(pinnedPoint);
-  if (orbitHovered && orbitHovered !== pinnedPoint) drawPoint(orbitHovered);
+  if (orbitHovered && orbitHovered !== pinnedPoint && inFrame(orbitHovered)) drawPoint(orbitHovered);
   ctx.globalAlpha = 1;
+
+  if (orbitDragged && orbitPointers.size === 1) {
+    const pointer = orbitPointers.values().next().value;
+    if (pointer.pivot) {
+      const {x, y} = project(pointer.pivot);
+      ctx.beginPath();
+      ctx.moveTo(x - 8, y);
+      ctx.lineTo(x + 8, y);
+      ctx.moveTo(x, y - 8);
+      ctx.lineTo(x, y + 8);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#536787';
+      ctx.stroke();
+    }
+  }
 }
 
 function setOrbit(next) {
@@ -2428,18 +2496,30 @@ function setOrbit(next) {
   scheduleSavePreferences();
 }
 
-function orbitHit(event) {
-  const rect = orbitCanvas.getBoundingClientRect();
-  const x = event.clientX - rect.left, y = event.clientY - rect.top;
-  let nearest = null, best = 15 ** 2;
+function orbitHit(x, y, project, radius = 15) {
+  let nearest = null, best = radius ** 2;
   for (const point of orbitPoints) {
-    const distance = (point.x - x) ** 2 + (point.y - y) ** 2;
-    if (distance < best || (distance === best && point.depth > nearest?.depth)) {
-      nearest = point;
+    const screen = project(point.position);
+    const distance = (screen.x - x) ** 2 + (screen.y - y) ** 2;
+    if (distance < best || (distance === best && screen.depth > nearest?.screen.depth)) {
+      nearest = {point, screen};
       best = distance;
     }
   }
   return nearest;
+}
+
+function hitAtPointer(event, radius) {
+  const rect = orbitCanvas.getBoundingClientRect();
+  return orbitHit(event.clientX - rect.left, event.clientY - rect.top,
+    orbitScreenProjection(rect.width, rect.height), radius)?.point;
+}
+
+function showOrbitTip(point, x, y) {
+  const {cost, score, time} = point.m;
+  const peers = orbitPoints.filter(other => other !== point &&
+    other.m.cost === cost && other.m.score === score && other.m.time === time);
+  showModelTip(point, x, y, peers);
 }
 
 orbitCanvas.addEventListener('wheel', event => {
@@ -2447,7 +2527,12 @@ orbitCanvas.addEventListener('wheel', event => {
   event.preventDefault();
   const multiplier = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? orbitCanvas.clientHeight : 1;
   const delta = clamp(event.deltaY * multiplier, -210, 210);
-  zoomOrbit(Math.exp(-delta * .003), {x: event.clientX, y: event.clientY});
+  const rect = orbitCanvas.getBoundingClientRect();
+  const hit = orbitHit(event.clientX - rect.left, event.clientY - rect.top,
+    orbitScreenProjection(rect.width, rect.height), 6);
+  const center = hit ? {x: rect.left + hit.screen.x, y: rect.top + hit.screen.y}
+    : {x: event.clientX, y: event.clientY};
+  zoomOrbit(Math.exp(-delta * .003), center);
 }, {passive: false});
 
 for (const type of ['contextmenu', 'auxclick']) {
@@ -2468,7 +2553,8 @@ orbitCanvas.addEventListener('pointerdown', event => {
   hidePlotTip();
   orbitCanvas.dataset.gesture = action;
   orbitPointers.set(event.pointerId, {
-    x: event.clientX, y: event.clientY, action, selects: touch || event.button === 0
+    x: event.clientX, y: event.clientY, action, selects: touch || event.button === 0,
+    pivot: action === 'rotate' ? hitAtPointer(event)?.position ?? visibleOrbitPivot() : null
   });
   orbitCanvas.setPointerCapture(event.pointerId);
 });
@@ -2478,9 +2564,9 @@ orbitCanvas.addEventListener('pointermove', event => {
   const next = {...previous, x: event.clientX, y: event.clientY};
   if (!previous) {
     if (orbitPointers.size || event.pointerType === 'touch') return;
-    const hit = orbitHit(event);
+    const hit = hitAtPointer(event);
     if (hit === orbitHovered) return;
-    if (hit) showModelTip(hit, next.x, next.y);
+    if (hit) showOrbitTip(hit, next.x, next.y);
     else hidePlotTip();
     orbitHovered = hit;
     queueOrbitDraw();
@@ -2498,7 +2584,7 @@ orbitCanvas.addEventListener('pointermove', event => {
   } else if (previous.action === 'pan') {
     panOrbit(dx, dy);
   } else if (previous.action === 'rotate') {
-    setOrbit({...orbit, yaw: orbit.yaw + dx * .009, pitch: orbit.pitch - dy * .007});
+    rotateOrbit(orbit.yaw + dx * .009, orbit.pitch - dy * .007, previous.pivot);
   }
   orbitPointers.set(event.pointerId, next);
 });
@@ -2509,11 +2595,12 @@ function finishOrbitPointer(event) {
   orbitPointers.delete(event.pointerId);
   if (orbitPointers.size) return;
   delete orbitCanvas.dataset.gesture;
+  queueOrbitDraw();
   if (!pointer.selects || orbitDragged || event.type !== 'pointerup') return;
-  const hit = orbitHit(event);
+  const hit = hitAtPointer(event);
   if (hit) {
     pinModel(hit.m);
-    showModelTip(hit, event.clientX, event.clientY);
+    showOrbitTip(hit, event.clientX, event.clientY);
   } else hidePlotTip();
 }
 for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) {
@@ -2541,9 +2628,11 @@ orbitCanvas.addEventListener('keydown', event => {
     return;
   }
   if (shiftKey && key.startsWith('Arrow')) {
-    setOrbit({...orbit,
-      yaw: orbit.yaw + (key === 'ArrowRight' ? .15 : key === 'ArrowLeft' ? -.15 : 0),
-      pitch: orbit.pitch + (key === 'ArrowUp' ? .12 : key === 'ArrowDown' ? -.12 : 0)});
+    rotateOrbit(
+      orbit.yaw + (key === 'ArrowRight' ? .15 : key === 'ArrowLeft' ? -.15 : 0),
+      orbit.pitch + (key === 'ArrowUp' ? .12 : key === 'ArrowDown' ? -.12 : 0),
+      visibleOrbitPivot()
+    );
     return;
   }
   if (!orbitPoints.length) return;
@@ -2555,7 +2644,7 @@ orbitCanvas.addEventListener('keydown', event => {
   else orbitIndex = (orbitIndex + (backward ? -1 : 1) + n) % n;
   orbitHovered = orbitPoints[orbitIndex];
   const rect = orbitCanvas.getBoundingClientRect();
-  showModelTip(orbitHovered, rect.left + orbitHovered.x, rect.top + orbitHovered.y);
+  showOrbitTip(orbitHovered, rect.left + orbitHovered.x, rect.top + orbitHovered.y);
   $('plotReadout').textContent = modelSummary(orbitHovered.m);
   queueOrbitDraw();
 });
@@ -2581,7 +2670,7 @@ function chooseOrbitView(id) {
   const view = id === 'iso' ? {yaw: Math.PI / 4, pitch: Math.atan(1 / Math.SQRT2)}
     : orbitViews.find(view => view.id === id);
   if (!view) return;
-  setOrbit({...orbit, yaw: view.yaw, pitch: view.pitch});
+  rotateOrbit(view.yaw, view.pitch, visibleOrbitPivot());
   $('orbitViewMenu').open = false;
   orbitCanvas.focus({preventScroll: true});
 }
