@@ -318,6 +318,20 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8p
 #orbitCanvas[data-gesture="rotate"] { cursor: grabbing; }
 #orbitCanvas[data-gesture="pan"] { cursor: move; }
 .orbit-viewport { position: relative; }
+.orbit-axis-key {
+  position: absolute; inset: 4px auto auto 4px; pointer-events: none;
+  display: flex; align-items: center; gap: 5px;
+  padding: 3px 10px 3px 2px; border: 1px solid var(--line);
+  border-radius: 9px; background: rgb(255 255 255 / 95%);
+  color: var(--ink); font-size: 12px; line-height: 1.5;
+}
+#orbitAxisGlyph { width: 66px; height: 66px; flex: none; }
+#orbitAxisNames { margin: 0; padding: 0; list-style: none; }
+#orbitAxisNames li { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+#orbitAxisNames [data-axis-letter] { min-width: 1em; text-align: center; font: 700 12px var(--digits); }
+#orbitAxisNames [data-axis-letter="X"] { color: #a43a37; }
+#orbitAxisNames [data-axis-letter="Y"] { color: #1e704b; }
+#orbitAxisNames [data-axis-letter="Z"] { color: #315eaa; }
 #orbitCube { position: absolute; top: 4px; right: 4px; width: 90px; color: var(--muted); z-index: 1; text-align: center; }
 #orbitCubeSvg { display: block; width: 90px; height: 90px; }
 #orbitCubeSvg g { cursor: pointer; }
@@ -342,6 +356,7 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8p
 @media (max-width: 600px) {
   .view-picker, #pinnedStrip { padding-inline: 13px; }
   #orbitCanvas { height: 360px; }
+  #orbitAxisGlyph { width: 54px; height: 54px; }
 }
 </style>
 </head>
@@ -445,7 +460,15 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8p
         <div id="timeScatter" class="chart-area" hidden></div>
         <div id="orbitPanel" class="chart-area">
           <div class="orbit-viewport">
-          <canvas id="orbitCanvas" tabindex="0" role="application" aria-label="三維散點圖，成本、智慧指數與每任務時間" aria-describedby="orbitHelp orbitKeys" hidden></canvas>
+          <canvas id="orbitCanvas" tabindex="0" role="application" aria-label="三維散點圖，成本、智慧指數與每任務時間" aria-describedby="orbitAxisNames orbitHelp orbitKeys" hidden></canvas>
+          <div id="orbitAxisKey" class="orbit-axis-key" hidden>
+            <canvas id="orbitAxisGlyph" aria-hidden="true" width="66" height="66"></canvas>
+            <ul id="orbitAxisNames" aria-label="三維座標軸">
+              <li><span data-axis-letter="X">X</span>成本（USD）</li>
+              <li><span data-axis-letter="Y">Y</span>智慧指數</li>
+              <li><span data-axis-letter="Z">Z</span>時間（分鐘）</li>
+            </ul>
+          </div>
           <div id="orbitCube" hidden>
             <svg id="orbitCubeSvg" viewBox="0 0 90 90" role="group" aria-label="視角方塊"></svg>
             <details id="orbitViewMenu">
@@ -2328,9 +2351,9 @@ function renderOrbit(pick) {
     Number.isFinite(m.time) && m.time >= 0 && Number.isFinite(m.score));
   const frontier = spatialFrontier(data);
   orbitAxes = [
-    {title: '成本（USD）', values: orbitAxis(data.map(m => m.cost)), format: chartCost},
-    {title: '智慧指數', values: orbitAxis(data.map(m => m.score), true), format: v => fmt(v, 3)},
-    {title: '時間（分鐘）', values: orbitAxis(data.map(m => m.time)), format: v => fmt(v, 4)}
+    {values: orbitAxis(data.map(m => m.cost)), format: chartCost},
+    {values: orbitAxis(data.map(m => m.score), true), format: v => fmt(v, 3)},
+    {values: orbitAxis(data.map(m => m.time)), format: v => fmt(v, 4)}
   ];
   orbitPoints = data.map(m => ({
     m, front: frontier.has(m.id),
@@ -2369,6 +2392,7 @@ function drawOrbit() {
   $('orbitReset').disabled = !available;
   $('orbitFit').disabled = !available;
   $('orbitCube').hidden = !available;
+  $('orbitAxisKey').hidden = !available;
   $('orbitScale').value = Math.round(orbit.scale * 100) + '%';
   if (!available) return;
   const width = orbitCanvas.clientWidth, height = orbitCanvas.clientHeight;
@@ -2383,6 +2407,7 @@ function drawOrbit() {
   const projection = orbitProjection(orbit);
   const project = orbitScreenProjection(width, height, projection);
   drawViewCube(projection);
+  drawAxisGlyph(projection);
   const line = (from, to, stroke) => {
     const a = project(from), b = project(to);
     ctx.beginPath();
@@ -2406,7 +2431,7 @@ function drawOrbit() {
     line([-.5, -.5, v], [.5, -.5, v], '#e8eef7');
     line([-.5, v, -.5], [.5, v, -.5], '#e8eef7');
   }
-  orbitAxes.forEach(({title, values, format}, axis) => {
+  orbitAxes.forEach(({values, format}, axis) => {
     // Place labels on the outer edges of the projected box.
     const candidates = axis === 0 ? [[-.5,-.5,-.5], [-.5,-.5,.5]]
       : axis === 2 ? [[-.5,-.5,-.5], [.5,-.5,-.5]]
@@ -2432,12 +2457,7 @@ function drawOrbit() {
       ctx.fillText(format(values[0] + (values[1] - values[0]) * t),
         a.x + (b.x - a.x) * t + nx * 15, a.y + (b.y - a.y) * t + ny * 15);
     }
-    ctx.font = '600 12px system-ui, sans-serif';
-    const labelX = (a.x + b.x) / 2 + nx * 35;
-    const labelY = (a.y + b.y) / 2 + ny * 35;
-    if (labelX >= 0 && labelX <= width && labelY >= 0 && labelY <= height) {
-      ctx.fillText(title, clamp(labelX, 46, width - 46), clamp(labelY, 13, height - 13));
-    }
+
   });
 
   const pinned = pinnedByMode[loadedMode];
@@ -2723,6 +2743,63 @@ $('orbitViewMenu').addEventListener('click', event => {
   const view = event.target.closest('[data-orbit-view]')?.dataset.orbitView;
   if (view) chooseOrbitView(view);
 });
+
+const axisGlyph = $('orbitAxisGlyph');
+const axisGlyphContext = axisGlyph.getContext('2d');
+const axisLetters = [...$('orbitAxisNames').querySelectorAll('[data-axis-letter]')].map(label => ({
+  letter: label.dataset.axisLetter,
+  color: getComputedStyle(label).color
+}));
+let axisGlyphView;
+
+function drawAxisGlyph(project) {
+  const size = 66;
+  const pixels = Math.round(size * Math.min(devicePixelRatio || 1, 2));
+  const key = `${orbit.yaw}|${orbit.pitch}|${pixels}`;
+  if (key === axisGlyphView) return;
+  axisGlyphView = key;
+
+  if (axisGlyph.width !== pixels) axisGlyph.width = axisGlyph.height = pixels;
+  const ctx = axisGlyphContext;
+  ctx.setTransform(pixels / size, 0, 0, pixels / size, 0, 0);
+  ctx.clearRect(0, 0, size, size);
+  const center = size / 2;
+  const directions = axisLetters.map(({letter, color}, axis) => {
+    const endpoint = [0, 0, 0];
+    endpoint[axis] = 1;
+    return {letter, color, ...project(endpoint)};
+  }).sort((a, b) => a.depth - b.depth);
+
+  ctx.lineWidth = 1.5;
+  ctx.lineCap = 'round';
+  ctx.font = '600 11px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (const {x, y, color} of directions) {
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(center, center);
+    ctx.lineTo(center + x * 20, center + y * 20);
+    ctx.stroke();
+  }
+  const labels = [];
+  for (const {x, y, letter, color} of directions) {
+    const length = Math.hypot(x, y);
+    if (length < .18) continue;
+    const ux = x / length, uy = y / length;
+    const r = length * 20 + 7;
+    let px = center + ux * r, py = center + uy * r;
+    if (labels.some(label => Math.hypot(label.x - px, label.y - py) < 10)) {
+      px -= uy * 10;
+      py += ux * 10;
+    }
+    px = clamp(px, 6, size - 6);
+    py = clamp(py, 6, size - 6);
+    labels.push({x: px, y: py});
+    ctx.fillStyle = color;
+    ctx.fillText(letter, px, py);
+  }
+}
 
 // Navigation reflects whichever destination is nearest the reading position.
 const navigation = [...document.querySelectorAll('.masthead nav a')];
