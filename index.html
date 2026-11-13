@@ -314,8 +314,22 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8p
   .analysis-content { display: block; }
 .view-picker { display: flex; align-items: center; gap: 12px; padding: 12px 22px; border-bottom: 1px solid var(--line); font-size: 13px; font-weight: 600; }
 .view-picker select { min-height: 38px; border-color: var(--line); }
-#orbitCanvas { display: block; width: 100%; height: clamp(360px, 50vw, 480px); cursor: grab; touch-action: none; }
-#orbitCanvas:active { cursor: grabbing; }
+#orbitCanvas { display: block; width: 100%; height: clamp(360px, 50vw, 480px); cursor: crosshair; touch-action: none; }
+#orbitCanvas[data-gesture="rotate"] { cursor: grabbing; }
+#orbitCanvas[data-gesture="pan"] { cursor: move; }
+.orbit-viewport { position: relative; }
+#orbitCube { position: absolute; top: 4px; right: 4px; width: 90px; color: var(--muted); z-index: 1; text-align: center; }
+#orbitCubeSvg { display: block; width: 90px; height: 90px; }
+#orbitCubeSvg g { cursor: pointer; }
+#orbitCubeSvg polygon { stroke: #7890b0; stroke-width: 1; }
+#orbitCubeSvg g:hover polygon, #orbitCubeSvg g:focus-visible polygon { fill: #c8dcff; stroke: var(--accent); }
+#orbitCubeSvg text { fill: var(--ink); font: 600 12px system-ui, sans-serif; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+#orbitViewMenu { position: relative; font-size: 12px; }
+#orbitViewMenu summary { cursor: pointer; color: var(--accent); }
+.orbit-view-options { position: absolute; right: 0; display: grid; grid-template-columns: repeat(3, 42px); gap: 4px; padding: 6px; margin-top: 4px; background: white; border: 1px solid var(--line); border-radius: 8px; }
+.orbit-view-options button { min-height: 34px; padding: 2px; }
+.orbit-view-options button:first-child { grid-column: 1 / -1; }
+#orbitFit { border-left: 1px solid var(--line); }
 #orbitCanvas:focus-visible { outline-offset: -3px; }
 #orbitEmpty { min-height: 245px; color: var(--muted); padding: 20px; text-align: center; }
 #orbitScale { padding-inline: 8px; font: 11px var(--digits); }
@@ -395,6 +409,7 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8p
           <button id="orbitOut" type="button" aria-label="縮小三維圖" disabled>−</button>
           <output id="orbitScale" aria-label="三維圖縮放比例">100%</output>
           <button id="orbitIn" type="button" aria-label="放大三維圖" disabled>+</button>
+          <button id="orbitFit" type="button" disabled>置中</button>
           <button id="orbitReset" type="button" disabled>重設視角</button>
         </div>
       </div>
@@ -429,16 +444,33 @@ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8p
         <div id="scatter" class="chart-area" hidden></div>
         <div id="timeScatter" class="chart-area" hidden></div>
         <div id="orbitPanel" class="chart-area">
+          <div class="orbit-viewport">
           <canvas id="orbitCanvas" tabindex="0" role="application" aria-label="三維散點圖，成本、智慧指數與每任務時間" aria-describedby="orbitHelp orbitKeys" hidden></canvas>
+          <div id="orbitCube" hidden>
+            <svg id="orbitCubeSvg" viewBox="0 0 90 90" role="group" aria-label="視角方塊"></svg>
+            <details id="orbitViewMenu">
+              <summary>視角</summary>
+              <div class="orbit-view-options">
+                <button type="button" data-orbit-view="iso">等角</button>
+                <button type="button" data-orbit-view="front">前</button>
+                <button type="button" data-orbit-view="back">後</button>
+                <button type="button" data-orbit-view="left">左</button>
+                <button type="button" data-orbit-view="right">右</button>
+                <button type="button" data-orbit-view="top">上</button>
+                <button type="button" data-orbit-view="bottom">下</button>
+              </div>
+            </details>
+          </div>
+          </div>
           <div id="orbitEmpty" class="plot-window plot-empty">勾選模型後顯示三維散點圖。</div>
           <div class="plot-meta">
             <div id="orbitLegend" class="plot-legend"></div>
             <p id="orbitCount" class="side-note"></p>
           </div>
-          <p id="orbitHelp" class="side-note plot-explainer">拖曳旋轉，滾輪或雙指縮放。點選資料點可固定模型。</p>
+          <p id="orbitHelp" class="side-note plot-explainer">右鍵拖曳旋轉，中鍵或 Ctrl＋右鍵拖曳平移，滾輪以游標為中心縮放。左鍵點選可固定模型。觸控可單指旋轉、雙指平移與縮放。</p>
           <details class="plot-help side-note">
             <summary>鍵盤操作與有效前緣</summary>
-            <p id="orbitKeys">方向鍵切換模型，Shift＋方向鍵旋轉，＋／− 縮放，0 重設。Enter 固定模型，Esc 解除固定。</p>
+            <p id="orbitKeys">方向鍵切換模型，Shift＋方向鍵旋轉，Ctrl＋Shift＋方向鍵平移。＋／− 縮放，F 置中，0 重設。Enter 固定模型，Esc 解除固定。</p>
             <p>有效前緣上的模型，沒有其他已選模型能同時達到成本不高、時間不長、智慧指數不低，且至少一項更好。</p>
           </details>
         </div>
@@ -634,7 +666,7 @@ function restorePreferences() {
     if (timeView && [timeView.x, timeView.y, timeView.scale].every(Number.isFinite)) timeViewByMode[mode] = constrainView(timeView);
   }
   if (saved.orbit && [saved.orbit.yaw, saved.orbit.pitch, saved.orbit.scale].every(Number.isFinite)) {
-    orbit = {yaw: saved.orbit.yaw % (2 * Math.PI), pitch: clamp(saved.orbit.pitch, -.95, 1.1), scale: clamp(saved.orbit.scale, 1, 3)};
+    orbit = constrainOrbit(saved.orbit);
   }
   everLoaded = Object.keys(selectionByMode).length > 0;
 }
@@ -978,7 +1010,7 @@ $('rows').addEventListener('click', event => {
     pinModel(model);
     if (view === 'cost' && !plotState.pointMap.get(model.id)?.inView) setPlotView(plotState, baseView);
     if (view === 'time' && !timePlotState.pointMap.get(model.id)?.inView) setTimePlotView(timePlotState, baseView);
-    if (view === 'orbit' && orbit.scale > 1) setOrbit({...orbit, scale: 1});
+    if (view === 'orbit') fitOrbit();
   }
   $('chart').scrollIntoView({block: 'start'});
   const surface = view === 'orbit' ? orbitCanvas : view === 'cost' ? plotState?.svg : timePlotState?.svg;
@@ -2152,7 +2184,7 @@ for (const id of ['scatter','timeScatter']) {
   }, {passive: false});
 }
 
-const defaultOrbit = {yaw: .64, pitch: .36, scale: 1};
+const defaultOrbit = {yaw: .64, pitch: .36, scale: 1, panX: 0, panY: 0};
 let orbit = {...defaultOrbit};
 let orbitPoints = [];
 let orbitPick;
@@ -2163,6 +2195,54 @@ const orbitCanvas = $('orbitCanvas');
 const orbitContext = orbitCanvas.getContext('2d');
 const orbitPointers = new Map();
 let orbitDragged = false;
+
+function constrainOrbit(view) {
+  const scale = clamp(view.scale, 1, 3);
+  const limit = scale * .85;
+  return {
+    yaw: view.yaw % (2 * Math.PI),
+    pitch: clamp(view.pitch, -Math.PI / 2, Math.PI / 2),
+    scale,
+    panX: clamp(Number.isFinite(view.panX) ? view.panX : 0, -limit, limit),
+    panY: clamp(Number.isFinite(view.panY) ? view.panY : 0, -limit, limit)
+  };
+}
+
+function orbitUnit(width, height) {
+  return Math.min(width * .54, height * .62);
+}
+
+function orbitProjection(view) {
+  const cY = Math.cos(view.yaw), sY = Math.sin(view.yaw);
+  const cP = Math.cos(view.pitch), sP = Math.sin(view.pitch);
+  return ([x, y, z]) => {
+    const depth = x * sY + z * cY;
+    return {x: x * cY - z * sY, y: depth * sP - y * cP, depth: y * sP + depth * cP};
+  };
+}
+
+function zoomOrbit(factor, before, after = before) {
+  const rect = orbitCanvas.getBoundingClientRect();
+  const unit = orbitUnit(rect.width, rect.height);
+  if (!unit) return;
+  const scale = clamp(orbit.scale * factor, 1, 3);
+  const ratio = scale / orbit.scale;
+  const x = (before.x - rect.left - rect.width / 2) / unit;
+  const y = (before.y - rect.top - rect.height / 2) / unit;
+  setOrbit({...orbit, scale,
+    panX: x + (orbit.panX - x) * ratio + (after.x - before.x) / unit,
+    panY: y + (orbit.panY - y) * ratio + (after.y - before.y) / unit
+  });
+}
+
+function panOrbit(dx, dy) {
+  const unit = orbitUnit(orbitCanvas.clientWidth, orbitCanvas.clientHeight);
+  if (unit) setOrbit({...orbit, panX: orbit.panX + dx / unit, panY: orbit.panY + dy / unit});
+}
+
+function fitOrbit() {
+  setOrbit({...orbit, scale: 1, panX: 0, panY: 0});
+}
 
 function spatialFrontier(data) {
   return new Set(data.filter(model => !data.some(other =>
@@ -2231,6 +2311,8 @@ function drawOrbit() {
   $('orbitIn').disabled = !available || orbit.scale >= 3;
   $('orbitOut').disabled = !available || orbit.scale <= 1;
   $('orbitReset').disabled = !available;
+  $('orbitFit').disabled = !available;
+  $('orbitCube').hidden = !available;
   $('orbitScale').value = Math.round(orbit.scale * 100) + '%';
   if (!available) return;
   const width = orbitCanvas.clientWidth, height = orbitCanvas.clientHeight;
@@ -2242,17 +2324,17 @@ function drawOrbit() {
   const ctx = orbitContext;
   ctx.setTransform(pixelWidth / width, 0, 0, pixelHeight / height, 0, 0);
   ctx.clearRect(0, 0, width, height);
-  const unit = Math.min(width * .54, height * .62) * orbit.scale;
-  const cosYaw = Math.cos(orbit.yaw), sinYaw = Math.sin(orbit.yaw);
-  const cosPitch = Math.cos(orbit.pitch), sinPitch = Math.sin(orbit.pitch);
-  const project = ([x,y,z]) => {
-    const depth = x * sinYaw + z * cosYaw;
+  const unit = orbitUnit(width, height);
+  const projection = orbitProjection(orbit);
+  const project = position => {
+    const point = projection(position);
     return {
-      x: width / 2 + (x * cosYaw - z * sinYaw) * unit,
-      y: height / 2 - (y * cosPitch - depth * sinPitch) * unit,
-      depth: y * sinPitch + depth * cosPitch
+      x: width / 2 + (point.x * orbit.scale + orbit.panX) * unit,
+      y: height / 2 + (point.y * orbit.scale + orbit.panY) * unit,
+      depth: point.depth
     };
   };
+  drawViewCube(projection);
   const line = (from, to, stroke) => {
     const a = project(from), b = project(to);
     ctx.beginPath();
@@ -2338,7 +2420,9 @@ function drawOrbit() {
 }
 
 function setOrbit(next) {
-  orbit = {...next, yaw: next.yaw % (2 * Math.PI), pitch: clamp(next.pitch, -.95, 1.1), scale: clamp(next.scale, 1, 3)};
+  const view = constrainOrbit(next);
+  if (Object.keys(view).every(key => view[key] === orbit[key])) return;
+  orbit = view;
   hidePlotTip();
   queueOrbitDraw();
   scheduleSavePreferences();
@@ -2362,21 +2446,36 @@ orbitCanvas.addEventListener('wheel', event => {
   if (!event.deltaY) return;
   event.preventDefault();
   const multiplier = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? orbitCanvas.clientHeight : 1;
-  const scale = clamp(orbit.scale * Math.exp(-clamp(event.deltaY * multiplier, -210, 210) * .003), 1, 3);
-  if (scale !== orbit.scale) setOrbit({...orbit, scale});
+  const delta = clamp(event.deltaY * multiplier, -210, 210);
+  zoomOrbit(Math.exp(-delta * .003), {x: event.clientX, y: event.clientY});
 }, {passive: false});
 
+for (const type of ['contextmenu', 'auxclick']) {
+  orbitCanvas.addEventListener(type, event => event.preventDefault());
+}
+
 orbitCanvas.addEventListener('pointerdown', event => {
-  if (event.button !== 0 || orbitPointers.size >= 2) return;
-  if (!orbitPointers.size) orbitDragged = false;
-  else orbitDragged = true;
-  orbitPointers.set(event.pointerId, {x: event.clientX, y: event.clientY});
+  const touch = event.pointerType === 'touch';
+  if ((!touch && ![0, 1, 2].includes(event.button)) || orbitPointers.size >= 2 ||
+      (!touch && orbitPointers.size)) return;
+  const action = touch ? 'rotate'
+    : event.button === 1 || (event.button === 2 && event.ctrlKey) ? 'pan'
+    : event.button === 2 ? 'rotate' : 'select';
+  if (orbitPointers.size) orbitDragged = true;
+  else orbitDragged = false;
+  event.preventDefault();
+  orbitCanvas.focus({preventScroll: true});
+  hidePlotTip();
+  orbitCanvas.dataset.gesture = action;
+  orbitPointers.set(event.pointerId, {
+    x: event.clientX, y: event.clientY, action, selects: touch || event.button === 0
+  });
   orbitCanvas.setPointerCapture(event.pointerId);
 });
 
 orbitCanvas.addEventListener('pointermove', event => {
-  const next = {x: event.clientX, y: event.clientY};
   const previous = orbitPointers.get(event.pointerId);
+  const next = {...previous, x: event.clientX, y: event.clientY};
   if (!previous) {
     if (orbitPointers.size || event.pointerType === 'touch') return;
     const hit = orbitHit(event);
@@ -2394,15 +2493,23 @@ orbitCanvas.addEventListener('pointermove', event => {
   if (second) {
     const ratio = Math.hypot(next.x - second.x, next.y - second.y) /
       Math.max(1, Math.hypot(previous.x - second.x, previous.y - second.y));
-    setOrbit({...orbit, scale: orbit.scale * ratio});
-  } else {
+    const midpoint = point => ({x: (point.x + second.x) / 2, y: (point.y + second.y) / 2});
+    zoomOrbit(ratio, midpoint(previous), midpoint(next));
+  } else if (previous.action === 'pan') {
+    panOrbit(dx, dy);
+  } else if (previous.action === 'rotate') {
     setOrbit({...orbit, yaw: orbit.yaw + dx * .009, pitch: orbit.pitch - dy * .007});
   }
   orbitPointers.set(event.pointerId, next);
 });
 
 function finishOrbitPointer(event) {
-  if (!orbitPointers.delete(event.pointerId) || orbitPointers.size || orbitDragged || event.type !== 'pointerup') return;
+  const pointer = orbitPointers.get(event.pointerId);
+  if (!pointer) return;
+  orbitPointers.delete(event.pointerId);
+  if (orbitPointers.size) return;
+  delete orbitCanvas.dataset.gesture;
+  if (!pointer.selects || orbitDragged || event.type !== 'pointerup') return;
   const hit = orbitHit(event);
   if (hit) {
     pinModel(hit.m);
@@ -2416,9 +2523,10 @@ orbitCanvas.addEventListener('pointerleave', () => { if (!orbitPointers.size) hi
 orbitCanvas.addEventListener('blur', hidePlotTip);
 
 orbitCanvas.addEventListener('keydown', event => {
-  const {key, shiftKey} = event;
+  const {key, shiftKey, ctrlKey} = event;
   if (key === 'Escape') { clearModelPin(); hidePlotTip(); return; }
   if (key === 'Enter' && orbitPoints[orbitIndex]) { event.preventDefault(); pinModel(orbitPoints[orbitIndex].m); return; }
+  if (key.toLowerCase() === 'f' && !ctrlKey && !event.metaKey && !event.altKey) { event.preventDefault(); fitOrbit(); return; }
   if (key === '0') { event.preventDefault(); setOrbit(defaultOrbit); return; }
   if (['+','=','-'].includes(key)) {
     event.preventDefault();
@@ -2427,6 +2535,11 @@ orbitCanvas.addEventListener('keydown', event => {
   }
   if (!['ArrowRight','ArrowLeft','ArrowUp','ArrowDown','Home','End'].includes(key)) return;
   event.preventDefault();
+  if (ctrlKey && shiftKey && key.startsWith('Arrow')) {
+    panOrbit(key === 'ArrowRight' ? 24 : key === 'ArrowLeft' ? -24 : 0,
+      key === 'ArrowDown' ? 24 : key === 'ArrowUp' ? -24 : 0);
+    return;
+  }
   if (shiftKey && key.startsWith('Arrow')) {
     setOrbit({...orbit,
       yaw: orbit.yaw + (key === 'ArrowRight' ? .15 : key === 'ArrowLeft' ? -.15 : 0),
@@ -2449,8 +2562,78 @@ orbitCanvas.addEventListener('keydown', event => {
 $('orbitIn').onclick = () => setOrbit({...orbit, scale: orbit.scale * 1.25});
 $('orbitOut').onclick = () => setOrbit({...orbit, scale: orbit.scale / 1.25});
 $('orbitReset').onclick = () => setOrbit(defaultOrbit);
+$('orbitFit').onclick = fitOrbit;
 $('orbitFrontierFocus').onchange = () => { queueOrbitDraw(); scheduleSavePreferences(); };
 connectProviderLegend($('orbitLegend'));
+
+const orbitViews = [
+  {id: 'front', title: '前', axis: 2, side: 1, yaw: 0, pitch: 0},
+  {id: 'back', title: '後', axis: 2, side: -1, yaw: Math.PI, pitch: 0},
+  {id: 'right', title: '右', axis: 0, side: 1, yaw: Math.PI / 2, pitch: 0},
+  {id: 'left', title: '左', axis: 0, side: -1, yaw: -Math.PI / 2, pitch: 0},
+  {id: 'top', title: '上', axis: 1, side: 1, yaw: 0, pitch: Math.PI / 2},
+  {id: 'bottom', title: '下', axis: 1, side: -1, yaw: 0, pitch: -Math.PI / 2}
+];
+const cubeNamespace = 'http://www.w3.org/2000/svg';
+const cubeSvg = $('orbitCubeSvg');
+
+function chooseOrbitView(id) {
+  const view = id === 'iso' ? {yaw: Math.PI / 4, pitch: Math.atan(1 / Math.SQRT2)}
+    : orbitViews.find(view => view.id === id);
+  if (!view) return;
+  setOrbit({...orbit, yaw: view.yaw, pitch: view.pitch});
+  $('orbitViewMenu').open = false;
+  orbitCanvas.focus({preventScroll: true});
+}
+
+for (const face of orbitViews) {
+  const group = document.createElementNS(cubeNamespace, 'g');
+  const polygon = document.createElementNS(cubeNamespace, 'polygon');
+  const text = document.createElementNS(cubeNamespace, 'text');
+  face.group = group;
+  face.polygon = polygon;
+  face.text = text;
+  group.setAttribute('role', 'button');
+  group.setAttribute('tabindex', '0');
+  group.setAttribute('aria-label', face.title + '視圖');
+  text.textContent = face.title;
+  text.setAttribute('aria-hidden', 'true');
+  group.append(polygon, text);
+  cubeSvg.append(group);
+  group.addEventListener('click', () => chooseOrbitView(face.id));
+  group.addEventListener('keydown', event => {
+    if (!['Enter', ' '].includes(event.key)) return;
+    event.preventDefault();
+    chooseOrbitView(face.id);
+  });
+}
+
+function drawViewCube(project) {
+  for (const face of orbitViews) {
+    const center = [0, 0, 0];
+    center[face.axis] = face.side * .5;
+    const position = project(center);
+    face.group.toggleAttribute('hidden', position.depth <= .015);
+    if (position.depth <= .015) continue;
+    const corners = [[-.5,-.5],[.5,-.5],[.5,.5],[-.5,.5]].map(([a,b]) => {
+      const vertex = [...center];
+      vertex[(face.axis + 1) % 3] = a;
+      vertex[(face.axis + 2) % 3] = b;
+      const point = project(vertex);
+      return [45 + point.x * 49, 45 + point.y * 49].join(',');
+    });
+    face.polygon.setAttribute('points', corners.join(' '));
+    face.polygon.setAttribute('fill', ['#dde8f9','#f1f5ff','#e7effc'][face.axis]);
+    face.text.setAttribute('x', 45 + position.x * 49);
+    face.text.setAttribute('y', 45 + position.y * 49);
+    face.text.toggleAttribute('hidden', position.depth < .12);
+  }
+}
+
+$('orbitViewMenu').addEventListener('click', event => {
+  const view = event.target.closest('[data-orbit-view]')?.dataset.orbitView;
+  if (view) chooseOrbitView(view);
+});
 
 // Navigation reflects whichever destination is nearest the reading position.
 const navigation = [...document.querySelectorAll('.masthead nav a')];
