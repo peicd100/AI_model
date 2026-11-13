@@ -1,0 +1,2333 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="使用虛構資料探索模型成本、任務時間與智慧指數。">
+  <title>Model Lens｜互動展示</title>
+  <style>
+:root {
+  color-scheme: light;
+  --page: #f7f9fc;
+  --surface: #ffffff;
+  --ink: #192b47;
+  --muted: #596b84;
+  --accent: #2455d6;
+  --accent-hover: #153da7;
+  --accent-light: #edf2ff;
+  --line: #dce3ef;
+  --rule: #edf0f6;
+  --control: #8b9ab1;
+  --soft: #f4f7fb;
+  --warning: #825713;
+  --focus: #2455d6;
+  --digits: "Cascadia Mono", Consolas, monospace;
+  --gutter: clamp(18px, 4.2vw, 72px);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 15px/1.6 "Source Sans 3", "Noto Sans TC", "Microsoft JhengHei", "Noto Sans CJK TC", system-ui, sans-serif; }
+h1,h2,h3,p,fieldset,dl,dd { margin: 0; }
+h1,h2,h3 { line-height: 1.3; }
+h2 { font-size: 21px; font-weight: 650; letter-spacing: -.035em; }
+a { color: var(--accent); text-underline-offset: .2em; }
+a:hover { color: var(--accent-hover); }
+button,input,select { font: inherit; color: inherit; }
+button,select,input:not([type="checkbox"]) { min-height: 42px; max-width: 100%; border: 1px solid var(--control); border-radius: 8px; background: var(--surface); padding: 7px 11px; }
+button { cursor: pointer; font-weight: 550; }
+button:hover:not(:disabled) { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+button:disabled,select:disabled { opacity: .5; cursor: default; }
+button.primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; color: white; background: var(--accent); border-color: var(--accent); }
+button.primary:hover:not(:disabled) { color: white; background: var(--accent-hover); border-color: var(--accent-hover); }
+button svg,.chart-jump svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
+input::placeholder { color: #64758c; opacity: 1; }
+input[type="checkbox"] { width: 16px; height: 16px; flex: 0 0 auto; margin: 0; accent-color: var(--accent); cursor: pointer; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+[hidden] { display: none !important; }
+.sr-only,.skip:not(:focus) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.skip:focus { position: fixed; z-index: 30; left: 12px; top: 12px; padding: 8px 12px; background: white; }
+.shell { max-width: 1680px; margin-inline: auto; padding-inline: var(--gutter); }
+.site-header { position: sticky; top: 0; z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+.masthead { display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 76px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; white-space: nowrap; }
+.brand h1 { font: 700 23px/1.1 "Trebuchet MS", "Source Sans 3", system-ui, sans-serif; letter-spacing: -.07em; }
+.brand-mark { width: 38px; height: 38px; color: var(--accent); }
+.brand-mark svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.6; }
+.brand-mark .lens-center { fill: currentColor; stroke: none; }
+.masthead nav { display: flex; align-self: stretch; gap: clamp(18px, 3vw, 40px); }
+.masthead nav a { display: inline-flex; align-items: center; position: relative; color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 550; }
+.masthead nav a::after { content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--accent); transform: scaleX(0); }
+.masthead nav a:hover,.masthead nav a.current { color: var(--accent); }
+.masthead nav a.current::after { transform: scaleX(1); }
+#main,.panel,.chart-panel { scroll-margin-top: 100px; }
+.source-desk { margin-block: 25px 35px; border-bottom: 1px solid var(--line); }
+.source-head,.source-bottom { display: flex; align-items: center; justify-content: space-between; gap: 10px 18px; }
+.source-head { min-height: 49px; }
+.source-label { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 12px; }
+.source-label span { color: var(--muted); font-size: 12px; }
+.source-label strong { font-size: 15px; font-weight: 600; }
+.source-controls { display: flex; align-items: center; gap: 9px; }
+.source-controls select,.source-controls button { min-height: 38px; font-size: 12px; }
+.source-controls select { background: transparent; border-color: var(--line); }
+.source-controls button { flex: 0 0 auto; }
+.source-bottom { flex-wrap: wrap; padding-block: 10px 15px; }
+.connection-summary { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 11px; }
+.connection-summary::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #82949d; flex: 0 0 auto; }
+.connection-summary[data-state="ready"]::before { background: #167365; }
+.connection-summary[data-state="error"] { color: var(--warning); }
+.connection-summary[data-state="error"]::before { background: #98621b; }
+.status { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.status.ok { color: #116052; }
+.status.error { color: var(--warning); }
+details summary { cursor: pointer; color: var(--accent); }
+details summary:hover { text-decoration: underline; }
+.source-details { font-size: 11px; flex: 0 0 auto; }
+.source-details[open] { flex: 1 1 100%; padding-top: 5px; }
+.source-details .status { margin-block: 12px 6px; }
+.source-explainer { max-width: 78ch; color: var(--muted); padding-block: 8px; }
+.source-explainer p+p { margin-top: 6px; }
+.chart-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 25px; }
+.chart-heading h2 { font-size: clamp(26px, 2.9vw, 42px); font-weight: 600; letter-spacing: -.055em; }
+.chart-heading p { margin-top: 9px; color: var(--muted); font-size: 13px; }
+.chart-jump { display: inline-flex; align-items: center; gap: 10px; flex: 0 0 auto; text-decoration: none; font-size: 13px; font-weight: 600; }
+.chart-jump svg { width: 34px; height: 34px; padding: 7px; border: 1px solid #b8c8ee; border-radius: 50%; }
+.analysis-board { background: white; border: 1px solid #d3ddec; border-radius: 18px; box-shadow: 0 12px 42px -22px #253e7b30; overflow: hidden; }
+.plot-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 20px; min-height: 65px; padding: 13px 24px; border-bottom: 1px solid var(--line); }
+.frontier-toggle { display: inline-flex; align-items: center; gap: 8px; margin-right: auto; color: var(--ink); font-size: 12px; cursor: pointer; }
+.frontier-toggle input { width: 30px; height: 17px; appearance: none; border: 1px solid #8b9ab1; border-radius: 20px; background: #f2f5fa; position: relative; }
+.frontier-toggle input::before { content: ""; position: absolute; top: 3px; left: 3px; width: 9px; height: 9px; border-radius: 50%; background: #617089; }
+.frontier-toggle input:checked { background: var(--accent); border-color: var(--accent); }
+.frontier-toggle input:checked::before { transform: translateX(13px); background: white; }
+.plot-width { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+.plot-width select { min-height: 33px; padding: 3px 6px; border-color: var(--line); background: var(--soft); font-size: 12px; }
+.checks { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; cursor: pointer; }
+.plot-controls { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; background: white; }
+.plot-controls button { touch-action: manipulation; min-height: 33px; border: 0; border-radius: 0; padding: 3px 9px; font-size: 11px; }
+#plotReset { border-left: 1px solid var(--line); }
+#plotIn,#plotOut { min-width: 32px; font-size: 17px; }
+#plotScale { min-width: 6ch; color: var(--muted); text-align: center; font: 11px var(--digits); }
+.analysis-content { display: grid; grid-template-columns: minmax(0,1fr) 285px; }
+.chart-area { min-width: 0; padding: 18px 22px 16px; }
+.plot-window { overflow: auto; background: white; scrollbar-color: #a4b4d4 var(--soft); }
+.plot-window svg { display: block; width: 100%; touch-action: none; user-select: none; }
+.plot-surface { cursor: crosshair; }
+.plot-window svg.is-panning .plot-surface { cursor: grabbing; }
+.plot-window svg:focus-visible { outline-offset: -3px; }
+.plot-meta { display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: 8px 12px; margin-top: 9px; }
+.plot-legend { display: flex; flex-wrap: wrap; gap: 2px 5px; color: var(--muted); font-size: 11px; }
+.plot-legend .legend-item { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; border-color: transparent; border-radius: 5px; padding: 3px 6px; font-size: 11px; background: transparent; font-weight: 400; }
+.plot-legend .legend-item[aria-pressed="true"] { border-color: #9fb6ef; background: var(--accent-light); color: var(--accent-hover); }
+.plot-legend .legend-item small { color: var(--muted); font-size: 10px; }
+.plot-legend>span { display: inline-flex; align-items: center; gap: 6px; padding-inline: 6px; }
+.plot-legend i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; }
+.plot-legend .front-ring { width: 10px; height: 10px; border: 1px solid var(--muted); }
+.plot-meta>p { padding-top: 5px; }
+.side-note { color: var(--muted); font-size: 11px; }
+.plot-explainer { margin-top: 10px; }
+.plot-help { margin-top: 4px; }
+.plot-help p { margin-top: 5px; max-width: 78ch; }
+.plot-grid { stroke: #e9edf6; stroke-dasharray: 3 4; }
+.plot-axis { stroke: #b8c5da; }
+.plot-tick { fill: var(--muted); font: 10px var(--digits); }
+.plot-label { fill: var(--muted); font-size: 11px; font-weight: 550; }
+.plot-point.is-muted { opacity: .13; }
+.plot-point.is-pinned circle { stroke-width: 2.4; }
+.plot-point.is-pinned circle:last-child { r: 6; }
+.inspector { --model-color: var(--accent); background: #f1f5ff; border-left: 1px solid #dce5f6; padding: 23px 25px 21px; min-width: 0; display: flex; flex-direction: column; }
+.inspector-top { display: flex; justify-content: space-between; align-items: center; gap: 5px; color: var(--muted); font-size: 11px; }
+#inspectorState { color: var(--accent); font-size: 10px; }
+.inspector-heading { min-height: 110px; padding-top: 25px; }
+.inspect-provider { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 11px; }
+.inspect-provider::before { content: ""; width: 6px; height: 6px; background: var(--model-color); border-radius: 50%; flex: 0 0 auto; }
+.inspector h3 { margin-top: 8px; font-size: 22px; font-weight: 600; letter-spacing: -.035em; overflow-wrap: anywhere; }
+.inspect-main { display: grid; grid-template-columns: 1fr; gap: 17px; margin-block: 23px; }
+.inspect-main span { display: block; color: var(--muted); font-size: 11px; }
+.inspect-main strong { display: block; margin-top: 2px; font: 500 36px/1.15 "Source Sans 3", "Trebuchet MS", system-ui, sans-serif; letter-spacing: -.055em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.inspect-main>div:first-child strong { color: var(--accent); font-size: 50px; }
+.inspect-details { display: grid; gap: 8px; padding-block: 17px; border-top: 1px solid #d7e1f3; }
+.inspect-details>div { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.inspect-details dt { color: var(--muted); font-size: 11px; }
+.inspect-details dd { font: 12px/1.5 var(--digits); text-align: right; overflow-wrap: anywhere; }
+.inspect-frontier { display: flex; align-items: center; gap: 7px; font-size: 11px; color: #315b37; margin-block: 0 15px; }
+.inspect-frontier::before { content: ""; width: 8px; height: 8px; border: 1.5px solid currentColor; border-radius: 50%; }
+.inspector-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: auto; }
+.inspector-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 5px 8px; border-color: #c2cfe9; background: transparent; font-size: 11px; }
+#pinInspection { flex: 1 1 auto; }
+#pinInspection[aria-pressed="true"] { background: white; color: var(--accent); border-color: var(--accent); }
+#findModel { flex: 1 1 auto; }
+.inspect-note { margin-top: 11px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.workspace { display: grid; grid-template-columns: 280px minmax(0,1fr); gap: 32px; margin-top: 50px; align-items: start; }
+.panel { min-width: 0; }
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px 16px; min-height: 78px; padding-block: 0 20px; }
+.panel-head p { color: var(--muted); font-size: 12px; margin-top: 5px; }
+.setup-head { border-bottom: 1px solid var(--line); }
+.setup-head h2 { font-size: 18px; }
+.counts { display: flex; align-items: baseline; gap: 5px; color: var(--muted); white-space: nowrap; font-size: 11px; }
+.counts strong { color: var(--accent); font: 600 14px/1 var(--digits); }
+.setup-body { padding-top: 20px; }
+.providers { min-width: 0; border: 0; padding: 0 0 18px; border-bottom: 1px solid var(--line); }
+.providers legend { padding: 0; margin-bottom: 8px; font-weight: 600; font-size: 12px; }
+#providers { display: grid; gap: 4px; }
+#providers label { display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 7px; min-width: 0; min-height: 36px; padding: 6px 9px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+#providers label:hover { background: #eaf0fb; }
+#providers label:has(input:checked) { background: #edf2fc; }
+#providers label span { display: flex; align-items: center; min-width: 0; overflow-wrap: anywhere; }
+#providers small { color: var(--muted); font: 11px/1 var(--digits); }
+.provider-dot { display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; flex: 0 0 auto; }
+.actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.provider-actions { margin-top: 8px; }
+.provider-actions button { border-color: transparent; color: var(--accent); background: transparent; }
+.provider-actions button,.setup-foot button,.table-toolbar button { min-height: 34px; font-size: 11px; padding: 4px 8px; }
+.filter-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 17px 10px; margin-top: 20px; }
+.filter-grid .wide { grid-column: 1/-1; }
+.filter-grid input,.filter-grid select { width: 100%; min-width: 0; padding-inline: 9px; font-size: 12px; border-color: #9cabc1; }
+.field { display: block; margin-bottom: 6px; color: var(--ink); font-size: 11px; font-weight: 550; }
+#filterHelp { margin-top: 8px; }
+.setup-foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+.setup-foot .checks { font-size: 11px; }
+.setup-foot button { background: transparent; border-color: var(--line); }
+#export { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding-block: 4px; white-space: nowrap; font-size: 12px; background: transparent; border-color: #a8b5ca; }
+.table-toolbar,.table-meta { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px 10px; padding: 12px 16px; }
+.table-toolbar { background: white; border: 1px solid var(--line); border-bottom: 0; border-radius: 12px 12px 0 0; }
+.table-toolbar button { border-color: transparent; background: transparent; }
+.table-toolbar button:first-child { background: var(--accent-light); color: var(--accent); }
+#clear { color: var(--muted); }
+.table-wrap { overflow: auto; max-height: 552px; background: white; border-inline: 1px solid var(--line); scrollbar-color: #a4b4cd #f2f5fa; }
+.table-wrap:focus-visible { outline-offset: -3px; }
+.table-wrap.dragging { user-select: none; }
+.table-wrap.dragging tr { cursor: ns-resize; }
+table { table-layout: fixed; width: 100%; min-width: 945px; border-spacing: 0; white-space: nowrap; font-size: 13px; }
+.col-select { width: 50px; }
+.col-provider { width: 118px; }
+.col-score { width: 92px; }
+.col-cost { width: 100px; }
+.col-time { width: 96px; }
+.col-latency { width: 100px; }
+.col-extra { width: 96px; }
+.col-context { width: 78px; }
+th,td { text-align: right; padding: 11px 9px; border-bottom: 1px solid var(--rule); }
+th { position: sticky; z-index: 1; top: 0; background: #f0f4fa; color: var(--muted); font-size: 11px; }
+th[aria-sort] { background: #e9effe; color: var(--accent); }
+th:first-child,td:first-child { text-align: left; padding-left: 13px; padding-right: 1px; }
+th:nth-child(2),td:nth-child(2) { text-align: left; white-space: normal; }
+th:nth-child(3),td:nth-child(3) { text-align: left; }
+th:last-child,td:last-child { padding-right: 14px; }
+th button { display: inline-flex; justify-content: flex-end; align-items: center; gap: 5px; width: 100%; min-height: 27px; border: 0; padding: 0; border-radius: 0; background: transparent; font-size: inherit; white-space: normal; }
+th button:hover:not(:disabled) { background: transparent; color: var(--accent); }
+th:nth-child(2) button,th:nth-child(3) button { justify-content: flex-start; }
+.sort-arrow { font-size: 12px; }
+td:nth-child(n+4) { font: 11px/1.45 var(--digits); font-variant-numeric: tabular-nums; }
+td.model { font-weight: 550; line-height: 1.4; overflow-wrap: anywhere; }
+.model-focus { display: inline; min-height: 30px; padding: 0; border: 0; border-radius: 2px; background: transparent; font-size: 13px; font-weight: 550; text-align: left; overflow-wrap: anywhere; }
+.model-focus:hover:not(:disabled) { background: transparent; text-decoration: underline; text-underline-offset: 4px; }
+td:nth-child(3) { color: var(--muted); white-space: normal; overflow-wrap: anywhere; }
+td:last-child { white-space: normal; overflow-wrap: anywhere; }
+.provider-name { display: inline-flex; align-items: center; max-width: 100%; overflow-wrap: anywhere; font-size: 12px; }
+tbody tr:hover { background: #f4f7ff; }
+tbody tr.selected { background: #f7f9ff; }
+tbody tr.selected:hover { background: #edf2ff; }
+tbody tr.selected td:first-child { box-shadow: inset 2px 0 #6a8ce2; }
+tbody tr.inspected { background: #e8efff; }
+/* Windowed table: fixed-height rows keep virtual scrolling predictable. */
+tbody tr[data-row-id] > td { height: 58px; max-height: 58px; overflow: hidden; vertical-align: middle; }
+td.model .model-focus { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; max-height: 2.8em; white-space: normal; }
+tr.virtual-spacer > td { height: var(--spacer-height); padding: 0 !important; border: 0 !important; line-height: 0; font-size: 0; }
+.drag-handle { cursor: ns-resize; touch-action: none; border: 0; background: transparent; padding: 0 3px 0 0; min-width: 20px; min-height: 28px; color: var(--muted); font-size: 18px; }
+.selection-cell input { vertical-align: middle; }
+.table-empty-cell { padding: 0 !important; text-align: center !important; white-space: normal; }
+.table-empty-cell .empty { width: min(100%,var(--table-viewport,720px)); min-height: 159px; }
+.empty { display: grid; place-content: center; justify-items: center; gap: 6px; padding: 18px 12px; color: var(--muted); text-align: center; font-size: 13px; }
+.empty strong { color: var(--ink); font-size: 16px; }
+.empty a { margin-top: 4px; font-weight: 650; }
+.table-meta { min-height: 43px; border: 1px solid var(--line); border-radius: 0 0 12px 12px; background: white; color: var(--muted); font-size: 11px; }
+.table-count { display: flex; flex-wrap: wrap; column-gap: 9px; }
+#tableScrollHint { color: var(--accent); }
+.table-help[open] { flex: 1 1 100%; }
+.table-help p { margin-top: 6px; }
+.plot-empty { min-height: 455px; display: grid; place-items: center; background-image: radial-gradient(#dce5f5 1px,transparent 1px); background-size: 22px 22px; }
+.plot-empty .empty { background: white; border: 1px solid var(--line); border-radius: 12px; margin: 12px; padding: 24px; }
+.plot-tip { position: fixed; z-index: 10; max-width: min(325px,calc(100vw - 24px)); padding: 12px 15px; border: 1px solid #cbd7ed; border-radius: 10px; background: white; color: var(--ink); box-shadow: 0 8px 30px #243b6b20; visibility: hidden; pointer-events: none; font-size: 13px; }
+.plot-tip.visible { visibility: visible; }
+.plot-tip strong { display: block; margin-block: 3px 9px; overflow-wrap: anywhere; }
+.tip-provider,.tip-values span { color: var(--muted); font-size: 11px; }
+.tip-values { display: flex; gap: 23px; }
+.tip-values b { display: block; margin-top: 3px; font: 600 14px/1.4 var(--digits); }
+.tip-peer { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 8px; }
+.tip-peer strong { margin-bottom: 0; font-size: 12px; }
+#toast { position: fixed; z-index: 11; bottom: 22px; left: 50%; transform: translateX(-50%); width: max-content; max-width: calc(100% - 24px); padding: 10px 16px; border-radius: 9px; background: var(--ink); color: white; font-size: 13px; }
+#toast:empty { display: none; }
+footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 14px; padding-block: 24px 35px; margin-top: 40px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+@media (max-width: 1160px) {
+  .analysis-content { grid-template-columns: minmax(0,1fr) 250px; }
+  .inspector { padding-inline: 20px; }
+  .workspace { grid-template-columns: 250px minmax(0,1fr); gap: 24px; }
+  .chart-area { padding-inline: 15px; }
+  .plot-toolbar { padding-inline: 20px; gap: 10px 15px; }
+}
+@media (max-width: 900px) {
+  .analysis-content { grid-template-columns: minmax(0,1fr); }
+  .inspector { border-left: 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: minmax(0,1.1fr) minmax(0,1fr); gap: 8px 30px; padding: 20px 25px; }
+  .inspector-top { grid-column: 1/-1; }
+  .inspector-heading { grid-column: 1; min-height: 0; padding-top: 8px; }
+  .inspect-main { grid-row: 2/4; grid-column: 2; display: flex; justify-content: space-between; align-items: start; gap: 20px; margin-block: 12px; }
+  .inspect-main strong,.inspect-main>div:first-child strong { font-size: 36px; }
+  .inspect-details { grid-column: 1/-1; grid-template-columns: repeat(3,minmax(0,1fr)); padding-block: 12px; gap: 15px; }
+  .inspect-details>div { flex-wrap: wrap; gap: 4px 8px; }
+  .inspect-frontier { grid-column: 1; margin-block: 0; }
+  .inspector-actions { grid-column: 1; margin: 0; }
+  .inspect-note { grid-column: 2; align-self: center; margin: 0; }
+  .workspace { grid-template-columns: minmax(0,1fr); gap: 35px; margin-top: 35px; }
+  .setup-head { min-height: 45px; padding-bottom: 12px; }
+  .setup-body { display: grid; grid-template-columns: minmax(235px,36%) minmax(0,1fr); gap: 14px 25px; }
+  .providers { padding: 0 20px 0 0; border: 0; border-right: 1px solid var(--line); }
+  .filter-grid { margin-top: 0; }
+  .setup-foot { grid-column: 1/-1; margin-top: 0; }
+  .panel-head.database-head { min-height: 66px; }
+  .source-desk { margin-bottom: 28px; }
+}
+@media (max-width: 600px) {
+  .masthead { min-height: 64px; flex-wrap: wrap; gap: 0; padding-top: 14px; }
+  .brand h1 { font-size: 21px; }
+  .brand-mark { width: 32px; height: 32px; }
+  .masthead nav { gap: 26px; width: 100%; margin-top: 8px; height: 39px; }
+  .masthead nav a { font-size: 12px; }
+  #main,.panel,.chart-panel { scroll-margin-top: 125px; }
+  .source-desk { margin-top: 18px; }
+  .source-head { flex-direction: column; align-items: stretch; gap: 11px; }
+  .source-label strong { font-size: 14px; }
+  .source-controls select { min-width: 0; flex: 1 1 auto; }
+  .source-controls select,.filter-grid input,.filter-grid select,.plot-width select { font-size: 16px; }
+  .source-bottom { row-gap: 5px; padding-block: 12px; }
+  .source-details[open] { max-width: 100%; }
+  .chart-heading { align-items: start; flex-wrap: wrap; gap: 13px; margin-bottom: 19px; }
+  .chart-heading h2 { font-size: 29px; }
+  .chart-heading p { margin-top: 7px; font-size: 12px; }
+  .chart-jump { font-size: 12px; gap: 8px; }
+  .chart-jump svg { width: 26px; height: 26px; padding: 5px; }
+  .analysis-board { border-radius: 13px; }
+  .plot-toolbar { display: grid; grid-template-columns: minmax(0,1fr) auto; padding: 13px; gap: 9px 8px; }
+  .frontier-toggle { margin: 0; min-height: 35px; font-size: 11px; }
+  .plot-toolbar>.checks { margin-left: auto; font-size: 11px; }
+  .plot-width { min-width: 0; gap: 4px; font-size: 11px; }
+  .plot-width select { width: 76px; min-width: 0; max-width: 100%; padding-inline: 4px; font-size: 13px; }
+  .plot-controls button { min-height: 42px; padding-inline: 7px; }
+  #plotIn,#plotOut { min-width: 34px; }
+  .chart-area { padding: 12px 8px 15px; }
+  .plot-meta { gap: 4px; }
+  .plot-meta>p { padding: 0 6px; }
+  .plot-explainer,.plot-help { padding-inline: 6px; }
+  .plot-empty { min-height: 335px; }
+  .inspector { padding: 18px; gap: 10px; grid-template-columns: minmax(0,1fr); }
+  .inspector-top,.inspector-heading,.inspect-main,.inspect-details,.inspect-frontier,.inspector-actions,.inspect-note { grid-column: 1; grid-row: auto; }
+  .inspector-heading { padding-top: 3px; }
+  .inspector-actions button { min-height: 42px; }
+  .inspector h3 { font-size: 20px; margin-top: 5px; }
+  .inspect-main { display: grid; grid-template-columns: 1fr 1fr; margin-block: 7px 8px; }
+  .inspect-main strong,.inspect-main>div:first-child strong { font-size: 36px; }
+  .inspect-details { gap: 8px; }
+  .inspect-details>div { display: block; }
+  .inspect-details dd { text-align: left; margin-top: 4px; }
+  .inspect-note { margin-top: 0; }
+  .setup-body { display: block; }
+  #providers { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .providers { padding: 0 0 14px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .filter-grid { margin-top: 20px; }
+  .setup-foot { margin-top: 20px; }
+  .table-toolbar { padding-inline: 10px; }
+  .table-toolbar .checks { font-size: 11px; }
+  .table-wrap { max-height: 435px; }
+  .table-meta { padding-inline: 12px; }
+  .panel-head.database-head { align-items: start; }
+  #export { padding-inline: 8px; }
+  footer { margin-top: 30px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+  button,.masthead nav a,.chart-jump { transition: color .16s,background-color .16s,border-color .16s; }
+  .masthead nav a::after,.frontier-toggle input::before { transition: transform .18s; }
+  .plot-point { transition: opacity .16s; }
+  .analysis-board { animation: board-in .35s ease-out both; }
+  @keyframes board-in { from { opacity: .4; } to { opacity: 1; } }
+}
+  
+/* The efficiency view shares the visual grammar of the cost chart, with its own viewport. */
+.time-chart-panel { margin-top: 34px; scroll-margin-top: 100px; }
+.time-analysis-board { border-radius: 16px; }
+.time-chart-area { padding: 18px 22px 16px; }
+.time-chart-area .plot-window { border: 1px solid var(--rule); border-radius: 8px; }
+.time-chart-area .plot-meta { padding-inline: 2px; }
+.time-chart-footnote { margin-top: 10px; }
+.plot-point.is-cross-highlight { opacity: 1 !important; }
+.plot-point.is-cross-highlight circle:first-child { stroke-width: 2.2; }
+@media (max-width: 860px) {
+  .time-chart-area { padding: 12px 14px 14px; }
+  .time-chart-panel .plot-toolbar { padding-inline: 14px; }
+}
+@media (max-width: 600px) {
+  .time-chart-area { padding: 9px 8px 12px; }
+  .time-chart-panel .plot-toolbar { display: grid; grid-template-columns: 1fr auto; gap: 9px 8px; padding: 13px; }
+  .time-chart-panel .frontier-toggle { margin: 0; }
+  .time-chart-panel .plot-controls { grid-column: 1 / -1; justify-self: end; }
+}
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">跳到主要內容</a>
+  <header class="site-header">
+    <div class="shell masthead">
+      <a class="brand" href="#main">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><circle cx="16" cy="20" r="12"/><circle cx="24" cy="20" r="12"/><circle class="lens-center" cx="20" cy="20" r="3"/></svg></span>
+        <h1>Model Lens</h1>
+      </a>
+      <nav aria-label="頁內導覽">
+        <a href="#chart" class="current">成本分析</a>
+        <a href="#timeChart">效率分析</a>
+        <a href="#database">模型資料</a>
+        <a href="#setup">篩選條件</a>
+      </nav>
+    </div>
+  </header>
+  <main id="main" class="shell">
+    <div class="source-desk" aria-label="資料來源與擷取">
+      <div class="source-head">
+        <div class="source-label"><span>資料來源</span><strong>互動展示</strong></div>
+      </div>
+      <div class="source-bottom">
+        <p class="connection-summary">此頁使用虛構模型與數值，供體驗圖表與篩選。</p>
+      </div>
+    </div>
+
+    <section id="chart" class="chart-panel" aria-labelledby="chartTitle">
+      <div class="chart-heading">
+        <div>
+          <h2 id="chartTitle">成本與智慧指數</h2>
+          <p id="scatterHelp">越靠左上，每任務成本越低、智慧指數越高。</p>
+        </div>
+        <a class="chart-jump" href="#database">選擇模型 <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M10 4v12m-5-5 5 5 5-5"/></svg></a>
+      </div>
+      <div class="analysis-board">
+      <div class="plot-toolbar">
+          <label class="frontier-toggle"><input id="frontierFocus" type="checkbox"><span>聚焦有效前緣</span></label>
+          <label class="checks"><input id="logScale" type="checkbox">對數成本軸</label>
+          <label class="plot-width" for="zoom">圖寬
+            <select id="zoom">
+              <option value="0">自適應</option>
+              <option value="1500">寬幅</option>
+              <option value="2000">超寬</option>
+            </select>
+          </label>
+          <div class="plot-controls" role="group" aria-label="散點圖縮放">
+            <button type="button" id="plotOut" aria-label="縮小散點圖" disabled>−</button>
+            <output id="plotScale" aria-label="縮放比例">100%</output>
+            <button type="button" id="plotIn" aria-label="放大散點圖" disabled>+</button>
+            <button type="button" id="plotReset" disabled>重設視圖</button>
+          </div>
+      </div>
+      <div class="analysis-content">
+        <div id="scatter" class="chart-area"></div>
+        <aside id="inspector" class="inspector" aria-label="模型詳情">
+          <div class="inspector-top"><span>模型詳情</span><span id="inspectorState">等待資料</span></div>
+          <div class="inspector-heading">
+            <div id="inspectProvider" class="inspect-provider">尚未選取模型</div>
+            <h3 id="inspectName">從圖表開始探索。</h3>
+          </div>
+          <div class="inspect-main">
+            <div><span>智慧指數</span><strong id="inspectScore">—</strong></div>
+            <div><span id="inspectCostLabel">成本 / 任務（USD）</span><strong id="inspectCost">—</strong></div>
+          </div>
+          <dl class="inspect-details">
+            <div><dt id="inspectTimeLabel">時間 / 任務</dt><dd id="inspectTime">—</dd></div>
+            <div><dt>延遲（秒）</dt><dd id="inspectLatency">—</dd></div>
+            <div><dt>上下文</dt><dd id="inspectContext">—</dd></div>
+          </dl>
+          <p id="inspectFrontier" class="inspect-frontier" hidden>位於有效前緣</p>
+          <div class="inspector-actions">
+            <button id="pinInspection" type="button" aria-pressed="false" disabled><svg aria-hidden="true" viewBox="0 0 20 20"><path d="m7 3 6 0-1 5 3 3v1H5v-1l3-3-1-5Zm3 9v5"/></svg><span>固定此模型</span></button>
+            <button id="findModel" type="button" disabled>查看資料列</button>
+          </div>
+          <p id="inspectNote" class="inspect-note">勾選資料表中的模型後，即可在圖中查看。</p>
+        </aside>
+      </div>
+      </div>
+    </section>
+
+    <section id="timeChart" class="chart-panel time-chart-panel" aria-labelledby="timeChartTitle">
+      <div class="chart-heading">
+        <div>
+          <h2 id="timeChartTitle">任務時間與智慧指數</h2>
+          <p id="timeChartHelp">越靠左上，完成任務越快、智慧指數越高。</p>
+        </div>
+        <a class="chart-jump" href="#database">比較模型 <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M10 4v12m-5-5 5 5 5-5"/></svg></a>
+      </div>
+      <div class="analysis-board time-analysis-board">
+        <div class="plot-toolbar">
+          <label class="frontier-toggle"><input id="timeFrontierFocus" type="checkbox"><span>聚焦有效前緣</span></label>
+          <label class="checks"><input id="timeLogScale" type="checkbox">對數時間軸</label>
+          <div class="plot-controls" role="group" aria-label="任務時間圖縮放">
+            <button type="button" id="timePlotOut" aria-label="縮小任務時間圖" disabled>−</button>
+            <output id="timePlotScale" aria-label="縮放比例">100%</output>
+            <button type="button" id="timePlotIn" aria-label="放大任務時間圖" disabled>+</button>
+            <button type="button" id="timePlotReset" disabled>重設視圖</button>
+          </div>
+        </div>
+        <div id="timeScatter" class="chart-area time-chart-area"></div>
+      </div>
+      <p class="side-note time-chart-footnote">兩張圖共用模型選取與供應商聚焦；各自保留縮放、平移及有效前緣。點選模型會同步更新上方詳情。</p>
+    </section>
+
+    <div class="workspace">
+      <section id="setup" class="panel setup" aria-labelledby="setupTitle">
+        <div class="panel-head setup-head">
+          <h2 id="setupTitle">篩選模型</h2>
+          <div class="counts"><strong id="total">—</strong><span>符合條件</span></div>
+        </div>
+        <div class="setup-body">
+          <fieldset class="providers">
+            <legend>供應商</legend>
+            <div id="providers"></div>
+            <div class="actions provider-actions">
+              <button id="providerAll" type="button">全供應商</button>
+              <button id="providerPair" type="button">Aster + Boreal</button>
+            </div>
+          </fieldset>
+
+          <div class="filter-grid">
+            <div>
+              <label for="search" class="field">包含字串</label>
+              <input id="search" type="search" placeholder="如 aster, boreal" aria-describedby="filterHelp">
+            </div>
+            <div>
+              <label for="exclude" class="field">排除字串</label>
+              <input id="exclude" type="search" placeholder="如 lite, swift" aria-describedby="filterHelp">
+            </div>
+            <div class="wide">
+              <label for="match" class="field">包含條件</label>
+              <select id="match">
+                <option value="any">任一符合（OR）</option>
+                <option value="all">全部符合（AND）</option>
+              </select>
+              <p id="filterHelp" class="side-note">多組字串用逗號分隔，不分大小寫。符合任一排除字串即隱藏。</p>
+            </div>
+            <div>
+              <label for="minScore" class="field">最低智慧指數</label>
+              <input id="minScore" type="number" min="0" placeholder="不限">
+            </div>
+            <div>
+              <label for="maxCost" class="field" id="costFilterLabel">最高任務成本（USD）</label>
+              <input id="maxCost" type="number" min="0" step="0.01" placeholder="不限">
+            </div>
+          </div>
+          <div class="setup-foot">
+            <button type="button" id="reset">重設篩選</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="database" class="panel database" aria-labelledby="databaseTitle">
+        <div class="panel-head database-head">
+          <div>
+            <h2 id="databaseTitle">模型資料</h2>
+            <p id="tableDescription">勾選模型可更新散點圖。</p>
+          </div>
+          <button type="button" id="export"><svg aria-hidden="true" viewBox="0 0 20 20"><path d="M10 2v10m-4-4 4 4 4-4M3 12v5h14v-5"/></svg>匯出 CSV</button>
+        </div>
+        <div class="table-toolbar">
+          <div class="actions">
+            <button id="selectVisible" type="button">選取篩選結果</button>
+            <button id="selectAll" type="button">選取全部</button>
+            <button id="clear" type="button">清除選取</button>
+          </div>
+          <label class="checks"><input id="selectedOnly" type="checkbox">只顯示已選</label>
+        </div>
+        <div class="table-wrap" tabindex="0" role="region" aria-label="可捲動的模型資料表" aria-describedby="tableHelp">
+          <table>
+            <colgroup>
+              <col class="col-select"><col class="col-model"><col class="col-provider">
+              <col class="col-score"><col class="col-cost"><col class="col-time">
+              <col class="col-latency"><col class="col-extra"><col class="col-context">
+            </colgroup>
+            <thead>
+              <tr>
+                <th scope="col">選取</th>
+                <th scope="col"><button type="button" data-sort="name"><span id="nameHead">模型</span><span class="sort-arrow" aria-hidden="true">↕</span></button></th>
+                <th scope="col"><button type="button" data-sort="provider"><span id="providerHead">供應商</span><span class="sort-arrow" aria-hidden="true">↕</span></button></th>
+                <th scope="col"><button type="button" data-sort="score"><span id="scoreHead">智慧指數</span><span class="sort-arrow" aria-hidden="true">↕</span></button></th>
+                <th scope="col"><button type="button" data-sort="cost"><span id="costHead">成本 / 任務</span><span class="sort-arrow" aria-hidden="true">↕</span></button></th>
+                <th scope="col"><button type="button" data-sort="time"><span id="timeHead">時間 / 任務</span><span class="sort-arrow" aria-hidden="true">↕</span></button></th>
+                <th scope="col"><button type="button" data-sort="latency"><span id="latencyHead">延遲（秒）</span><span class="sort-arrow" aria-hidden="true">↕</span></button></th>
+                <th scope="col"><button type="button" data-sort="extra"><span id="extraHead">錯誤率</span><span class="sort-arrow" aria-hidden="true">↕</span></button></th>
+                <th scope="col"><button type="button" data-sort="context"><span id="contextHead">上下文</span><span class="sort-arrow" aria-hidden="true">↕</span></button></th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+        <div class="table-meta">
+          <div class="table-count"><span id="rowCount"></span><span>已選 <strong id="selectedCount">0</strong></span><span id="tableScrollHint" hidden>可橫向捲動</span></div>
+          <details class="table-help">
+            <summary>排序與選取說明</summary>
+            <p id="tableHelp">點欄名切換升冪或降冪，缺值（—）置底。可拖曳選取格的把手，也可按住 Shift 點選或按空白鍵來選取範圍。篩選範圍外的已選模型仍會納入比較。窄螢幕可橫向捲動資料表。</p>
+          </details>
+        </div>
+      </section>
+    </div>
+
+    <footer><span>Model Lens 互動展示。模型名稱與數值皆為虛構。</span></footer>
+  </main>
+  <div id="plotTip" class="plot-tip" role="tooltip"></div>
+  <div id="plotReadout" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script>
+
+'use strict';
+const SOURCES=[['openai','Aster','#285baa'],['anthropic','Boreal','#a85428'],['google','Cinder','#007765'],['deepseek','Delta','#6945a5'],['meta','Eon','#677318']];
+const $=id=>document.getElementById(id),color=p=>SOURCES.find(s=>s[1]===p)?.[2]||'#556770';
+let models=[],selected=new Set(),providerSet=new Set(SOURCES.map(source => source[1])),busy=false,loadedMode='web',lastFetched=null,anchor=null,drag=null,everLoaded=false;
+let sortKey='score',sortDir='desc';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num=v=>{if(v==null||v==='')return null;const n=Number(String(v).replace(/[$,%\s,]/g,''));return Number.isFinite(n)?n:null};
+const numberFormats = new Map();
+const fmt = (value, digits = 2) => {
+  if (value == null) return '—';
+  if (!numberFormats.has(digits)) numberFormats.set(digits, new Intl.NumberFormat('zh-TW', {maximumFractionDigits: digits}));
+  return numberFormats.get(digits).format(Number(value));
+};
+const money=v=>v==null?'—':'$'+fmt(v),empty=(a,b)=>'<div class="empty"><strong>'+esc(a)+'</strong><span>'+esc(b)+'</span></div>';
+function notify(s){$('toast').textContent=s;setTimeout(()=>$('toast').textContent='',3500)}
+function loadDemo() {
+  const demoRows = [
+    ['Aster One', 52, 0.82, 2.7], ['Aster Pro', 71, 3.6, 4.2],
+    ['Aster Max', 85, 7.5, 5.1], ['Aster Swift', 60, 1.2, 1.6],
+    ['Boreal Lite', 45, 0.29, 0.85], ['Boreal Core', 63, 1.1, 2.2],
+    ['Boreal Plus', 76, 3.1, 2.8], ['Boreal Ultra', 82, 5.9, 3.2],
+    ['Cinder Quick', 42, 0.18, 0.5], ['Cinder One', 58, 0.85, 1.1],
+    ['Cinder Pro', 74, 2.8, 1.9], ['Cinder Max', 88, 8.2, 4.7],
+    ['Delta Micro', 35, 0.08, 0.42], ['Delta Flow', 55, 0.57, 0.95],
+    ['Delta Think', 69, 1.9, 3.4], ['Delta Prime', 79, 4.5, 2.5],
+    ['Eon Lite', 48, 0.44, 1.2], ['Eon Core', 66, 1.5, 1.8],
+    ['Eon Focus', 72, 2.5, 2.15], ['Eon Peak', 91, 10.4, 5.5]
+  ];
+  models = demoRows.map(([name, score, cost, time], index) => ({
+    id: name, name, provider: SOURCES[Math.floor(index / 4)][1],
+    score, cost, time, latency: null, error: null, context: '—', source: 'Synthetic demo'
+  }));
+  lastFetched = new Date();
+  restoreSelection('web');
+  updateLabels();
+  renderProviders();
+  render();
+}
+
+const preferenceKey = 'model-lens.demo.preferences.v1';
+const valueFields = ['search', 'exclude', 'match', 'minScore', 'maxCost', 'zoom'];
+const checkFields = ['selectedOnly', 'logScale', 'frontierFocus', 'timeLogScale', 'timeFrontierFocus'];
+const selectionByMode = {};
+const viewByMode = {};
+const timeViewByMode = {};
+const pinnedByMode = {};
+const baseView = {x: 0, y: 0, scale: 1};
+const maxPlotScale = 20;
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function constrainView(view) {
+  const scale = clamp(view.scale, 1, maxPlotScale);
+  const limit = 1 - 1 / scale;
+  return {x: clamp(view.x, 0, limit), y: clamp(view.y, 0, limit), scale};
+}
+
+function restorePreferences() {
+  let saved;
+  try {
+    saved = JSON.parse(localStorage.getItem(preferenceKey));
+  } catch {
+    return;
+  }
+  if (!saved || typeof saved !== 'object') return;
+  const allowed = {match: ['any', 'all'], zoom: ['0', '1500', '2000']};
+  for (const id of valueFields) {
+    const value = saved.values?.[id];
+    if (typeof value === 'string' && (!allowed[id] || allowed[id].includes(value))) $(id).value = value;
+  }
+  for (const id of checkFields) {
+    if (typeof saved.checks?.[id] === 'boolean') $(id).checked = saved.checks[id];
+  }
+  if (Array.isArray(saved.providers)) providerSet = new Set(saved.providers.filter(name => typeof name === 'string'));
+  const sortKeys = [...document.querySelectorAll('[data-sort]')].map(button => button.dataset.sort);
+  if (sortKeys.includes(saved.sortKey)) sortKey = saved.sortKey;
+  if (['asc', 'desc'].includes(saved.sortDir)) sortDir = saved.sortDir;
+  for (const mode of ['web', 'api']) {
+    const ids = saved.selections?.[mode], view = saved.views?.[mode], timeView = saved.timeViews?.[mode];
+    if (typeof saved.pins?.[mode] === 'string') pinnedByMode[mode] = saved.pins[mode];
+    if (Array.isArray(ids)) selectionByMode[mode] = ids.filter(id => typeof id === 'string');
+    if (view && [view.x, view.y, view.scale].every(Number.isFinite)) viewByMode[mode] = constrainView(view);
+    if (timeView && [timeView.x, timeView.y, timeView.scale].every(Number.isFinite)) timeViewByMode[mode] = constrainView(timeView);
+  }
+  everLoaded = Object.keys(selectionByMode).length > 0;
+}
+
+function savePreferences() {
+  try {
+    localStorage.setItem(preferenceKey, JSON.stringify({
+      values: Object.fromEntries(valueFields.map(id => [id, $(id).value])),
+      checks: Object.fromEntries(checkFields.map(id => [id, $(id).checked])),
+      providers: [...providerSet],
+      sortKey, sortDir,
+      selections: selectionByMode,
+      views: viewByMode,
+      timeViews: timeViewByMode,
+      pins: pinnedByMode
+    }));
+  } catch {
+    // Settings remain usable in this tab when storage is blocked or full.
+  }
+}
+
+let preferenceWriteTimer = 0;
+function scheduleSavePreferences(delay = 220) {
+  clearTimeout(preferenceWriteTimer);
+  preferenceWriteTimer = setTimeout(() => {
+    preferenceWriteTimer = 0;
+    savePreferences();
+  }, delay);
+}
+
+function restoreSelection(mode) {
+  const ids = selectionByMode[mode];
+  if (ids) {
+    const available = new Set(models.map(model => model.id));
+    selected = new Set(ids.filter(id => available.has(id)));
+  } else {
+    selected = new Set();
+    if (!everLoaded) {
+      for (const provider of ['Aster', 'Boreal']) {
+        models.filter(model => model.provider === provider)
+          .sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
+          .slice(0, 2).forEach(model => selected.add(model.id));
+      }
+    }
+    selectionByMode[mode] = [...selected];
+  }
+  everLoaded = true;
+  savePreferences();
+}
+
+function saveSelection() {
+  // Keep selections from a provider that may be temporarily missing after refresh.
+  const available = new Set(models.map(model => model.id));
+  const unavailable = (selectionByMode[loadedMode] ?? []).filter(id => !available.has(id));
+  selectionByMode[loadedMode] = [...unavailable, ...selected];
+  scheduleSavePreferences();
+}
+
+function updateLabels() {
+  const api = loadedMode === 'api';
+  $('costFilterLabel').textContent = api ? '最高混合單價（USD / 1M）' : '最高任務成本（USD）';
+  $('costHead').textContent = api ? '混合 / 1M tokens' : '成本 / 任務';
+  $('timeHead').textContent = api ? '輸出速度 t/s' : '分鐘 / 任務';
+  $('extraHead').textContent = api ? '輸出 / 1M tokens' : '錯誤率';
+  $('tableDescription').textContent = api
+    ? '價格以每百萬 tokens 計。勾選模型可更新散點圖。'
+    : '勾選模型可更新散點圖。';
+  $('scatterHelp').textContent = api
+    ? '橫軸為每百萬 tokens 混合單價（3：1），縱軸為智慧指數。'
+    : '越靠左上，每任務成本越低、智慧指數越高。';
+  $('timeChartHelp').textContent = api
+    ? '官方 API 未提供每任務時間；目前無法用此來源繪製效率比較。'
+    : '越靠左上，完成任務越快、智慧指數越高。時間以分鐘計。';
+}
+
+function contextValue(v) {
+  if (v == null || v === '—') return null;
+  const match = String(v).replace(/,/g, '').trim().match(/^(\d+(?:\.\d+)?)\s*([kmb])?/i);
+  return match ? Number(match[1]) * ({k: 1e3, m: 1e6, b: 1e9}[match[2]?.toLowerCase()] || 1) : null;
+}
+
+function sortValue(model, key) {
+  if (key === 'time') return loadedMode === 'api' ? model.speed : model.time;
+  if (key === 'extra') return loadedMode === 'api' ? model.output : model.error;
+  if (key === 'context') return contextValue(model.context);
+  return model[key];
+}
+
+function compareModels(a, b) {
+  const av = sortValue(a, sortKey), bv = sortValue(b, sortKey);
+  if (av == null) return bv == null ? a.name.localeCompare(b.name) : 1;
+  if (bv == null) return -1;
+  const order = typeof av === 'string' ? av.localeCompare(bv) : av - bv;
+  return order * (sortDir === 'asc' ? 1 : -1) || a.name.localeCompare(b.name);
+}
+
+function updateSortHeaders() {
+  document.querySelectorAll('[data-sort]').forEach(button => {
+    const active = button.dataset.sort === sortKey;
+    const ascending = sortDir === 'asc';
+    const th = button.parentElement;
+    if (active) th.setAttribute('aria-sort', ascending ? 'ascending' : 'descending');
+    else th.removeAttribute('aria-sort');
+    button.querySelector('.sort-arrow').textContent = active ? (ascending ? '↑' : '↓') : '↕';
+    const label = button.querySelector('span').textContent;
+    const action = active ? (ascending ? '目前升冪，點選改降冪' : '目前降冪，點選改升冪') : '點選升冪排序';
+    button.setAttribute('aria-label', label + '，' + action);
+  });
+}
+
+function renderProviders() {
+  const names = [...new Set([...SOURCES.map(s => s[1]), ...models.map(m => m.provider)])];
+  $('providers').innerHTML = names.map(name => {
+    const count = models.filter(model => model.provider === name).length;
+    return `<label>
+      <input type="checkbox" data-provider="${esc(name)}" ${providerSet.has(name) ? 'checked' : ''}>
+      <span><i class="provider-dot" style="background:${color(name)}"></i>${esc(name)}</span>
+      <small aria-hidden="true">${models.length ? count : '—'}</small>
+    </label>`;
+  }).join('');
+  $('providers').querySelectorAll('input').forEach(input => {
+    input.onchange = () => {
+      if (input.checked) providerSet.add(input.dataset.provider);
+      else providerSet.delete(input.dataset.provider);
+      anchor = null;
+      tableWrap.scrollTop = 0;
+      scheduleSavePreferences();
+      render();
+    };
+  });
+}
+
+function terms(id) {
+  return $(id).value.toLowerCase().split(/[,，\n]+/).map(value => value.trim()).filter(Boolean);
+}
+
+function visible() {
+  const include = terms('search'), exclude = terms('exclude');
+  const min = $('minScore').value, max = $('maxCost').value;
+  const matchAll = $('match').value === 'all', selectedOnly = $('selectedOnly').checked;
+  return models.filter(model => {
+    const name = model.name.toLowerCase();
+    const matches = term => name.includes(term);
+    return providerSet.has(model.provider)
+      && (!include.length || (matchAll ? include.every(matches) : include.some(matches)))
+      && !exclude.some(matches)
+      && (min === '' || model.score != null && model.score >= Number(min))
+      && (max === '' || model.cost != null && model.cost <= Number(max))
+      && (!selectedOnly || selected.has(model.id));
+  }).sort(compareModels);
+}
+
+function chosen() {
+  return models.filter(model => selected.has(model.id));
+}
+
+function setRange(ids, start, end, value, base = selected) {
+  selected = new Set(base);
+  const a = visibleIndex.get(start), b = visibleIndex.get(end);
+  if (a == null || b == null) return;
+  for (let index = Math.min(a, b), last = Math.max(a, b); index <= last; index++) {
+    const id = ids[index];
+    if (value) selected.add(id);
+    else selected.delete(id);
+  }
+}
+
+function toggle(id, shift = false) {
+  const value = !selected.has(id);
+  const ids = shift && anchor ? visible().map(model => model.id) : [];
+  if (ids.includes(anchor)) {
+    visibleIndex = new Map(ids.map((modelId, index) => [modelId, index]));
+    setRange(ids, anchor, id, value);
+  }
+  else if (value) selected.add(id);
+  else selected.delete(id);
+  anchor = id;
+  if ($('selectedOnly').checked) tableWrap.scrollTop = 0;
+  saveSelection();
+  render();
+}
+
+const tableWrap = document.querySelector('.table-wrap');
+const modelTable = tableWrap.querySelector('table');
+const tableHead = tableWrap.querySelector('thead');
+tableHead.querySelector('tr')?.setAttribute('aria-rowindex', '1');
+const ROW_HEIGHT = 58;
+const ROW_OVERSCAN = 8;
+let rowModels, rowMode;
+const rowCache = new Map();
+let renderedRows = [];
+let renderedIds = [];
+let renderedStart = -1;
+let renderedEnd = -1;
+let renderedCount = -1;
+let currentVisible = [];
+let visibleIndex = new Map();
+let tableFrame = 0;
+
+function updateTableMetrics() {
+  tableWrap.style.setProperty('--table-viewport', tableWrap.clientWidth + 'px');
+  $('tableScrollHint').hidden = tableWrap.scrollWidth <= tableWrap.clientWidth;
+}
+
+function modelRow(model, api) {
+  const id = esc(model.id), name = esc(model.name), provider = esc(model.provider);
+  const extra = api ? money(model.output) : fmt(model.error) + (model.error == null ? '' : '%');
+  return `<tr data-row-id="${id}" class="${selected.has(model.id) ? 'selected' : ''}">
+    <td class="selection-cell">
+      <button class="drag-handle" type="button" data-drag="${id}" aria-label="拖曳連續選取 ${name}" tabindex="-1">⠿</button>
+      <input type="checkbox" data-id="${id}" aria-label="比較 ${provider} ${name}" ${selected.has(model.id) ? 'checked' : ''}>
+    </td>
+    <td class="model"><button type="button" class="model-focus" data-inspect="${id}" aria-label="在圖表查看 ${name}">${name}</button></td>
+    <td><span class="provider-name"><i class="provider-dot" style="background:${color(model.provider)}"></i>${provider}</span></td>
+    <td>${fmt(model.score)}</td>
+    <td>${money(model.cost)}</td>
+    <td>${fmt(api ? model.speed : model.time)}</td>
+    <td>${fmt(model.latency)}</td>
+    <td>${extra}</td>
+    <td>${esc(model.context)}</td>
+  </tr>`;
+}
+
+function makeSpacer(height) {
+  const row = document.createElement('tr');
+  row.className = 'virtual-spacer';
+  row.setAttribute('aria-hidden', 'true');
+  const cell = document.createElement('td');
+  cell.colSpan = 9;
+  cell.style.setProperty('--spacer-height', Math.max(0, height) + 'px');
+  row.append(cell);
+  return row;
+}
+
+function renderTableWindow(force = false) {
+  const count = currentVisible.length;
+  modelTable.setAttribute('aria-rowcount', String(count + 1));
+  const headerHeight = tableHead.offsetHeight;
+  const bodyTop = Math.max(0, tableWrap.scrollTop - headerHeight);
+  const start = count ? Math.max(0, Math.floor(bodyTop / ROW_HEIGHT) - ROW_OVERSCAN) : 0;
+  const end = count ? Math.min(count, Math.ceil((bodyTop + tableWrap.clientHeight) / ROW_HEIGHT) + ROW_OVERSCAN) : 0;
+  const slice = currentVisible.slice(start, end);
+  const ids = slice.map(model => model.id);
+  const changed = force || count !== renderedCount || start !== renderedStart || end !== renderedEnd ||
+    ids.length !== renderedIds.length || ids.some((id, index) => id !== renderedIds[index]);
+
+  if (!count) {
+    rowCache.clear();
+    const blank = models.length
+      ? empty('沒有符合條件的模型', '調整篩選條件，或使用「重設篩選」。')
+      : empty('尚未載入模型', '連線結果會顯示在上方的資料來源區。');
+    $('rows').innerHTML = `<tr><td colspan="9" class="table-empty-cell">${blank}</td></tr>`;
+    renderedRows = [];
+    renderedIds = [];
+    renderedStart = renderedEnd = renderedCount = 0;
+    return;
+  }
+
+  const nextRows = slice.map((model, offset) => {
+    let entry = rowCache.get(model.id);
+    if (!entry) {
+      const container = document.createElement('tbody');
+      container.innerHTML = modelRow(model, loadedMode === 'api');
+      const row = container.firstElementChild;
+      entry = {row, input: row.querySelector('input')};
+      rowCache.set(model.id, entry);
+    }
+    entry.row.setAttribute('aria-rowindex', String(start + offset + 2));
+    const checked = selected.has(model.id);
+    if (entry.row.classList.contains('selected') !== checked) entry.row.classList.toggle('selected', checked);
+    if (entry.input.checked !== checked) entry.input.checked = checked;
+    return entry.row;
+  });
+
+  if (changed) {
+    const activeIds = new Set(ids);
+    for (const id of rowCache.keys()) if (!activeIds.has(id)) rowCache.delete(id);
+    const nodes = [];
+    if (start > 0) nodes.push(makeSpacer(start * ROW_HEIGHT));
+    nodes.push(...nextRows);
+    const remaining = count - end;
+    if (remaining > 0) nodes.push(makeSpacer(remaining * ROW_HEIGHT));
+    $('rows').replaceChildren(...nodes);
+    renderedRows = nextRows;
+    renderedIds = ids;
+    renderedStart = start;
+    renderedEnd = end;
+    renderedCount = count;
+  } else {
+    renderedRows = nextRows;
+  }
+}
+
+$('rows').addEventListener('click', event => {
+  const input = event.target.closest('input[data-id]');
+  if (!input) return;
+  const id = input.dataset.id;
+  toggle(id, event.shiftKey);
+  const entry = rowCache.get(id);
+  (entry?.input.isConnected && !entry.row.hidden ? entry.input : $('selectedOnly')).focus({preventScroll: true});
+});
+$('rows').addEventListener('keydown', event => {
+  const input = event.target.closest('input[data-id]');
+  if (!input || event.key !== ' ' || !event.shiftKey) return;
+  event.preventDefault();
+  const id = input.dataset.id;
+  toggle(id, true);
+  const entry = rowCache.get(id);
+  (entry?.input.isConnected && !entry.row.hidden ? entry.input : $('selectedOnly')).focus({preventScroll: true});
+});
+$('rows').addEventListener('pointerdown', event => {
+  const handle = event.target.closest('[data-drag]');
+  if (!handle || event.button !== 0) return;
+  event.preventDefault();
+  const start = handle.dataset.drag;
+  drag = {start, end: start, ids: currentVisible.map(model => model.id), value: !selected.has(start), base: new Set(selected)};
+  setRange(drag.ids, start, start, drag.value, drag.base);
+  tableWrap.classList.add('dragging');
+  paintSelection();
+});
+
+$('rows').addEventListener('click', event => {
+  const button = event.target.closest('[data-inspect]');
+  if (!button) return;
+  const model = models.find(model => model.id === button.dataset.inspect);
+  if (!model) return;
+  if (!selected.has(model.id)) {
+    selected.add(model.id);
+    saveSelection();
+    render();
+  }
+  const point = plotState?.points.find(point => point.m.id === model.id);
+  if (!point) {
+    clearModelPin();
+    inspectModel(model);
+    $('inspectNote').textContent = '缺少可繪製的數值，無法在圖中定位。';
+    $('pinInspection').disabled = true;
+  } else {
+    pinModel(model);
+    if (!point.inView) setPlotView(plotState, baseView);
+  }
+  $('chart').scrollIntoView({block: 'start'});
+  if (plotState) plotState.svg.focus({preventScroll: true});
+});
+
+function render() {
+  const list = visible(), pick = chosen();
+  currentVisible = list;
+  visibleIndex = new Map(list.map((model, index) => [model.id, index]));
+  $('total').textContent = models.length ? list.length : '—';
+  $('selectedCount').textContent = pick.length;
+  $('rowCount').textContent = models.length ? `顯示 ${list.length} / ${models.length} 個模型` : '尚無模型資料';
+
+  const tableDataChanged = rowModels !== models || rowMode !== loadedMode;
+  if (tableDataChanged) {
+    rowModels = models;
+    rowMode = loadedMode;
+    rowCache.clear();
+    renderedRows = [];
+    renderedIds = [];
+    renderedStart = renderedEnd = renderedCount = -1;
+  }
+  renderTableWindow();
+  if (tableDataChanged) updateTableMetrics();
+  renderScatter(pick);
+  renderTimeScatter(pick);
+  updateSortHeaders();
+  syncInspector();
+}
+
+function revealModelRow(id) {
+  const index = visibleIndex.get(id);
+  if (index == null) return null;
+  const target = tableHead.offsetHeight + index * ROW_HEIGHT;
+  tableWrap.scrollTop = Math.max(0, target - Math.max(0, (tableWrap.clientHeight - ROW_HEIGHT) / 2));
+  renderTableWindow();
+  return rowCache.get(id)?.row ?? null;
+}
+
+tableWrap.addEventListener('scroll', () => {
+  if (tableFrame) return;
+  tableFrame = requestAnimationFrame(() => {
+    tableFrame = 0;
+    renderTableWindow();
+  });
+}, {passive: true});
+
+
+function paintSelection() {
+  for (const row of renderedRows) {
+    const entry = rowCache.get(row.dataset.rowId);
+    if (!entry) continue;
+    const checked = selected.has(row.dataset.rowId);
+    if (entry.input.checked === checked) continue;
+    row.classList.toggle('selected', checked);
+    entry.input.checked = checked;
+  }
+  $('selectedCount').textContent = selected.size;
+}
+
+let dragFrame = 0;
+let latestDragPointer = null;
+document.addEventListener('pointermove', event => {
+  if (!drag) return;
+  latestDragPointer = {x: event.clientX, y: event.clientY};
+  if (dragFrame) return;
+  dragFrame = requestAnimationFrame(() => {
+    dragFrame = 0;
+    if (!drag || !latestDragPointer) return;
+    const {x, y} = latestDragPointer;
+    const rect = tableWrap.getBoundingClientRect();
+    if (y > rect.bottom - 35) tableWrap.scrollTop += 18;
+    else if (y < rect.top + 35) tableWrap.scrollTop -= 18;
+    renderTableWindow();
+    const bodyY = tableWrap.scrollTop + (y - rect.top) - tableHead.offsetHeight;
+    const index = clamp(Math.floor(bodyY / ROW_HEIGHT), 0, Math.max(0, currentVisible.length - 1));
+    const model = currentVisible[index];
+    if (!model || model.id === drag.end) return;
+    drag.end = model.id;
+    setRange(drag.ids, drag.start, model.id, drag.value, drag.base);
+    paintSelection();
+  });
+});
+
+function endDrag() {
+  if (!drag) return;
+  if (dragFrame) cancelAnimationFrame(dragFrame);
+  dragFrame = 0;
+  latestDragPointer = null;
+  anchor = drag.start;
+  drag = null;
+  tableWrap.classList.remove('dragging');
+  saveSelection();
+  render();
+}
+
+document.addEventListener('pointerup', endDrag);
+document.addEventListener('pointercancel', endDrag);
+window.addEventListener('blur', endDrag);
+
+let plotState = null, hoverFrame = 0;
+let timePlotState = null, timeHoverFrame = 0, timeViewFrame = 0;
+let timeChartSnapshot = null;
+
+function nearestPlotPoint(points, cx, cy, matrix, radius = 28) {
+  let best = null, distance = radius * radius;
+  for (const point of points) {
+    if (!point.inView) continue;
+    const px = matrix.a * point.x + matrix.c * point.y + matrix.e;
+    const py = matrix.b * point.x + matrix.d * point.y + matrix.f;
+    const delta = (px - cx) ** 2 + (py - cy) ** 2;
+    if (delta <= distance) {
+      distance = delta;
+      best = point;
+    }
+  }
+  return best;
+}
+
+function hidePlotTip() {
+  cancelAnimationFrame(hoverFrame);
+  cancelAnimationFrame(timeHoverFrame);
+  hoverFrame = 0;
+  timeHoverFrame = 0;
+  $('plotTip').classList.remove('visible');
+  if (plotState) {
+    plotState.active = null;
+    const highlight = plotState.svg.querySelector('#plotHighlight');
+    if (highlight) highlight.setAttribute('visibility', 'hidden');
+  }
+  if (timePlotState) {
+    timePlotState.active = null;
+    const highlight = timePlotState.svg.querySelector('#timePlotHighlight');
+    if (highlight) highlight.setAttribute('visibility', 'hidden');
+  }
+}
+
+function chartCost(value) {
+  const precision = value !== 0 && Math.abs(value) < .01 ? 6 : 2;
+  return '$' + fmt(value, precision);
+}
+
+function showPlotPoint(point, cx, cy) {
+  if (!plotState) return;
+  const {svg, points, left, right, top, bottom} = plotState;
+  const {m, x, y, front} = point, tip = $('plotTip'), paint = color(m.provider);
+  const peers = points.filter(other => other !== point && Math.abs(other.x - x) < .01 && Math.abs(other.y - y) < .01);
+  plotState.active = point;
+  inspectPoint(point);
+  paintPlotEmphasis();
+  const group = svg.querySelector('#plotHighlight');
+  group.setAttribute('visibility', 'visible');
+  group.innerHTML = `<path d="M${left} ${y}H${right} M${x} ${top}V${bottom}" stroke="${paint}" stroke-opacity=".55" stroke-dasharray="3 4"/>
+    <circle cx="${x}" cy="${y}" r="12" fill="none" stroke="${paint}" stroke-width="1.5"/>
+    <circle cx="${x}" cy="${y}" r="6" fill="${paint}" stroke="white" stroke-width="1.5"/>`;
+
+  tip.innerHTML = `<div class="tip-provider">${esc(m.provider)}${front ? '｜有效前緣' : ''}</div>
+    <strong>${esc(m.name)}</strong>
+    <div class="tip-values">
+      <div><span>智慧指數</span><b>${fmt(m.score)}</b></div>
+      <div><span>${loadedMode === 'api' ? 'USD / 1M tokens' : 'USD / 任務'}</span><b>${chartCost(m.cost)}</b></div>
+    </div>
+    ${peers.length ? `<div class="tip-peer"><span class="tip-provider">相同座標的模型（${peers.length}）</span>
+      ${peers.map(peer => `<strong>${esc(peer.m.provider + ' / ' + peer.m.name)}</strong>`).join('')}</div>` : ''}`;
+  tip.style.maxHeight = Math.max(150, window.innerHeight - 24) + 'px';
+  tip.style.overflow = 'hidden';
+  tip.classList.add('visible');
+  const rect = tip.getBoundingClientRect(), pad = 12;
+  const tx = cx + 18 + rect.width > window.innerWidth - pad ? cx - rect.width - 18 : cx + 18;
+  const ty = cy - rect.height - 16 < pad ? cy + 18 : cy - rect.height - 16;
+  tip.style.left = Math.max(pad, Math.min(tx, window.innerWidth - rect.width - pad)) + 'px';
+  tip.style.top = Math.max(pad, Math.min(ty, window.innerHeight - rect.height - pad)) + 'px';
+}
+
+function tickStep(min, max, targetTicks) {
+  const ideal = (max - min) / targetTicks;
+  const unit = 10 ** Math.floor(Math.log10(ideal));
+  return [1, 2, 2.5, 5, 10].reduce((best, factor) => {
+    return Math.abs(factor * unit - ideal) < Math.abs(best * unit - ideal) ? factor : best;
+  }, 1) * unit;
+}
+
+function tickValues(min, max, targetTicks) {
+  const step = tickStep(min, max, targetTicks);
+  const first = Math.ceil(min / step - 1e-9);
+  const last = Math.floor(max / step + 1e-9);
+  return Array.from({length: last - first + 1}, (_, i) => (first + i) * step);
+}
+
+function updatePlotControls(state) {
+  const scale = state ? (viewByMode[state.mode] ?? baseView).scale : 1;
+  $('plotOut').disabled = scale <= 1;
+  $('plotIn').disabled = !state || scale >= maxPlotScale;
+  $('plotReset').disabled = scale <= 1;
+  $('plotScale').value = Math.round(scale * 100) + '%';
+}
+
+function drawViewport(state) {
+  const {left, right, top, bottom, log, xExtent, yMax, yMin, ticks} = state;
+  const view = viewByMode[state.mode] ?? baseView;
+  const x = ratio => left + (ratio - view.x) * view.scale * (right - left);
+  const y = ratio => top + (ratio - view.y) * view.scale * (bottom - top);
+  const xMin = view.x * xExtent, xMax = (view.x + 1 / view.scale) * xExtent;
+  const yExtent = yMax - yMin;
+  const visibleYMax = yMax - view.y * yExtent;
+  const visibleYMin = visibleYMax - yExtent / view.scale;
+  const xTicks = log
+    ? Array.from({length: ticks + 1}, (_, i) => xMin + (xMax - xMin) * i / ticks)
+    : tickValues(xMin, xMax, ticks);
+
+  const yTicks = tickValues(visibleYMin, visibleYMax, ticks);
+  const entries = [
+    ...yTicks.map(value => {
+      const yy = y((yMax - value) / yExtent);
+      return {path: `M${left} ${yy}H${right}`, x: left - 7, y: yy + 4, anchor: 'end', text: fmt(value, 3)};
+    }),
+    ...xTicks.map(value => {
+      const xx = x(value / xExtent);
+      return {path: `M${xx} ${top}V${bottom}`, x: xx, y: bottom + 19, anchor: 'middle', text: chartCost(log ? Math.expm1(value) : value)};
+    })
+  ];
+  for (let index = 0; index < entries.length; index++) {
+    let tick = state.tickNodes[index];
+    if (!tick) {
+      const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      const path = document.createElementNS(group.namespaceURI, 'path');
+      const label = document.createElementNS(group.namespaceURI, 'text');
+      path.setAttribute('class', 'plot-grid');
+      path.setAttribute('fill', 'none');
+      label.setAttribute('class', 'plot-tick');
+      group.append(path, label);
+      state.grid.append(group);
+      tick = {group, path, label};
+      state.tickNodes.push(tick);
+    }
+    const entry = entries[index];
+    tick.group.removeAttribute('display');
+    tick.path.setAttribute('d', entry.path);
+    tick.label.setAttribute('x', entry.x);
+    tick.label.setAttribute('y', entry.y);
+    tick.label.setAttribute('text-anchor', entry.anchor);
+    if (tick.label.textContent !== entry.text) tick.label.textContent = entry.text;
+  }
+  for (let index = entries.length; index < state.tickNodes.length; index++) {
+    state.tickNodes[index].group.setAttribute('display', 'none');
+  }
+
+  for (const point of state.points) {
+    point.x = x(point.xRatio);
+    point.y = y(point.yRatio);
+    const visible = inPlot(state, point);
+    const transform = `translate(${point.x} ${point.y})`;
+    if (point.lastTransform !== transform) {
+      point.element.setAttribute('transform', transform);
+      point.lastTransform = transform;
+    }
+    if (point.inView !== visible) point.element.setAttribute('visibility', visible ? 'visible' : 'hidden');
+    point.inView = visible;
+  }
+  updatePlotControls(state);
+}
+
+function inPlot(state, point) {
+  return point.x >= state.left && point.x <= state.right && point.y >= state.top && point.y <= state.bottom;
+}
+
+function plotCoordinates(state, x, y) {
+  const matrix = state.svg.getScreenCTM();
+  return matrix ? new DOMPoint(x, y).matrixTransform(matrix.inverse()) : null;
+}
+
+let viewFrame = 0, preferenceTimer;
+
+function setPlotView(state, next) {
+  const previous = viewByMode[state.mode] ?? baseView;
+  const view = constrainView(next);
+  if (view.x === previous.x && view.y === previous.y && view.scale === previous.scale) return;
+  viewByMode[state.mode] = view;
+  hidePlotTip();
+  if (!viewFrame) {
+    viewFrame = requestAnimationFrame(() => {
+      viewFrame = 0;
+      if (plotState === state) drawViewport(state);
+    });
+  }
+  clearTimeout(preferenceTimer);
+  preferenceTimer = setTimeout(() => {
+    preferenceTimer = null;
+    savePreferences();
+  }, 160);
+}
+
+function movePlotView(state, factor, before, after = before) {
+  const view = viewByMode[state.mode] ?? baseView;
+  const scale = clamp(view.scale * factor, 1, maxPlotScale);
+  const width = state.right - state.left, height = state.bottom - state.top;
+  setPlotView(state, {
+    scale,
+    x: view.x + (before.x - state.left) / (width * view.scale) - (after.x - state.left) / (width * scale),
+    y: view.y + (before.y - state.top) / (height * view.scale) - (after.y - state.top) / (height * scale)
+  });
+}
+
+function centerZoom(factor) {
+  const state = plotState;
+  if (state) movePlotView(state, factor, {x: (state.left + state.right) / 2, y: (state.top + state.bottom) / 2});
+}
+
+$('plotIn').onclick = () => centerZoom(1.5);
+$('plotOut').onclick = () => centerZoom(1 / 1.5);
+$('plotReset').onclick = () => {
+  if (plotState) setPlotView(plotState, baseView);
+};
+
+function connectPlotGestures(state) {
+  const {svg} = state;
+  const pointers = new Map();
+  let dragged = false;
+
+  svg.addEventListener('wheel', event => {
+    const location = plotCoordinates(state, event.clientX, event.clientY);
+    if (!location || !inPlot(state, location) || !event.deltaY) return;
+    const scale = (viewByMode[state.mode] ?? baseView).scale;
+    if (event.deltaY > 0 && scale <= 1) return;
+    event.preventDefault();
+    const multiplier = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? svg.clientHeight : 1;
+    movePlotView(state, Math.exp(-clamp(event.deltaY * multiplier, -210, 210) * .003), location);
+  }, {passive: false});
+
+  svg.onpointerdown = event => {
+    const location = plotCoordinates(state, event.clientX, event.clientY);
+    if (event.button !== 0 || !location || !inPlot(state, location) || pointers.size >= 2) return;
+    if (!pointers.size) dragged = false;
+    pointers.set(event.pointerId, location);
+    svg.setPointerCapture(event.pointerId);
+    if (pointers.size === 2) hidePlotTip();
+  };
+
+  svg.onpointermove = event => {
+    if (pointers.has(event.pointerId)) {
+      const after = plotCoordinates(state, event.clientX, event.clientY);
+      if (!after) return;
+      const before = pointers.get(event.pointerId);
+      const other = [...pointers.entries()].find(([id]) => id !== event.pointerId)?.[1];
+      if (other) {
+        const distance = Math.hypot(before.x - other.x, before.y - other.y);
+        const nextDistance = Math.hypot(after.x - other.x, after.y - other.y);
+        const midpoint = point => ({x: (point.x + other.x) / 2, y: (point.y + other.y) / 2});
+        movePlotView(state, nextDistance / Math.max(1, distance), midpoint(before), midpoint(after));
+      } else {
+        if (!dragged && Math.hypot(after.x - before.x, after.y - before.y) < 4) return;
+        movePlotView(state, 1, before, after);
+      }
+      pointers.set(event.pointerId, after);
+      dragged = true;
+      svg.classList.add('is-panning');
+      hidePlotTip();
+      return;
+    }
+
+    if (event.pointerType === 'touch' || pointers.size) return;
+    cancelAnimationFrame(hoverFrame);
+    hoverFrame = requestAnimationFrame(() => {
+      hoverFrame = 0;
+      const matrix = svg.getScreenCTM();
+      if (!matrix || plotState !== state) return;
+      const point = nearestPlotPoint(state.points, event.clientX, event.clientY, matrix);
+      if (!point) hidePlotTip();
+      else if (state.active !== point) showPlotPoint(point, event.clientX, event.clientY);
+    });
+  };
+
+  function finishPointer(event) {
+    if (!pointers.delete(event.pointerId) || pointers.size) return;
+    svg.classList.remove('is-panning');
+    if (dragged || event.type !== 'pointerup') return;
+    const matrix = svg.getScreenCTM();
+    if (!matrix) return;
+    const point = nearestPlotPoint(state.points, event.clientX, event.clientY, matrix, 40);
+    if (point) {
+      showPlotPoint(point, event.clientX, event.clientY);
+      pinModel(point.m);
+    }
+    else hidePlotTip();
+  }
+
+  svg.onpointerup = finishPointer;
+  svg.onpointercancel = finishPointer;
+  svg.onlostpointercapture = finishPointer;
+  svg.onpointerleave = event => {
+    if (event.pointerType !== 'touch' && !pointers.size) hidePlotTip();
+  };
+
+  svg.onkeydown = event => {
+    if (event.key === 'Escape') {
+      state.keyboardIndex = null;
+      clearModelPin();
+      hidePlotTip();
+      return;
+    }
+    if (event.key === 'Enter' && state.active) {
+      event.preventDefault();
+      pinModel(state.active.m);
+      $('plotReadout').textContent = '已固定 ' + state.active.m.name;
+      return;
+    }
+    if (['+', '=', '-', '0'].includes(event.key)) {
+      event.preventDefault();
+      if (event.key === '0') setPlotView(state, baseView);
+      else centerZoom(event.key === '-' ? 1 / 1.5 : 1.5);
+      return;
+    }
+    const arrows = {ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1]};
+    const direction = arrows[event.key];
+    if (direction && event.shiftKey) {
+      event.preventDefault();
+      const view = viewByMode[state.mode] ?? baseView;
+      setPlotView(state, {...view, x: view.x + direction[0] * .15 / view.scale, y: view.y + direction[1] * .15 / view.scale});
+      return;
+    }
+    if (!direction && event.key !== 'Home' && event.key !== 'End') return;
+    event.preventDefault();
+    const inView = state.points.filter(point => point.inView);
+    const matrix = svg.getScreenCTM();
+    if (!inView.length || !matrix) return;
+    const previous = inView.findIndex(point => point.i === (state.active?.i ?? state.keyboardIndex));
+    const backward = event.key === 'ArrowLeft' || event.key === 'ArrowUp';
+    const last = inView.length - 1;
+    let index = 0;
+    if (event.key === 'End') index = last;
+    else if (direction) index = previous < 0 ? (backward ? last : 0) : (previous + (backward ? -1 : 1) + inView.length) % inView.length;
+    const point = inView[index];
+    state.keyboardIndex = point.i;
+    const position = new DOMPoint(point.x, point.y).matrixTransform(matrix);
+    showPlotPoint(point, position.x, position.y);
+    $('plotReadout').textContent = point.m.name + '，智慧 ' + fmt(point.m.score) + '，成本 ' + chartCost(point.m.cost);
+  };
+  svg.onblur = hidePlotTip;
+}
+
+function frontierIds(data) {
+  const sorted = [...data].sort((a, b) => a.cost - b.cost || b.score - a.score);
+  const frontier = new Set();
+  let bestAtLowerCost = -Infinity;
+  for (let start = 0; start < sorted.length;) {
+    const first = sorted[start];
+    let end = start;
+    // Equal-cost, equal-score models share frontier status.
+    while (end < sorted.length && sorted[end].cost === first.cost) {
+      if (sorted[end].score === first.score && first.score > bestAtLowerCost) frontier.add(sorted[end].id);
+      end++;
+    }
+    bestAtLowerCost = Math.max(bestAtLowerCost, first.score);
+    start = end;
+  }
+  return frontier;
+}
+
+let chartSnapshot;
+
+function chartExtents(data, log) {
+  let maxCost = .01, minScore = 0, maxScore = 1;
+  for (const model of data) {
+    if (model.cost > maxCost) maxCost = model.cost;
+    if (model.score < minScore) minScore = model.score;
+    if (model.score > maxScore) maxScore = model.score;
+  }
+  const xStep = tickStep(0, maxCost * 1.04, 6);
+  const xExtent = log ? Math.log1p(maxCost * 1.08) : Math.ceil(maxCost * 1.04 / xStep) * xStep;
+  minScore *= 1.04;
+  maxScore *= 1.04;
+  const yStep = tickStep(minScore, maxScore, 6);
+  const yMin = Math.floor(minScore / yStep) * yStep;
+  const yMax = Math.ceil(maxScore / yStep) * yStep;
+  return {xExtent, yMin, yMax, frontier: frontierIds(data)};
+}
+
+function createPointElement(point) {
+  const ns = 'http://www.w3.org/2000/svg';
+  const group = document.createElementNS(ns, 'g');
+  group.setAttribute('class', 'plot-point');
+  const ring = document.createElementNS(ns, 'circle');
+  ring.setAttribute('r', '9');
+  ring.setAttribute('fill', 'none');
+  ring.setAttribute('stroke-width', '1.25');
+  const dot = document.createElementNS(ns, 'circle');
+  dot.setAttribute('r', '5');
+  dot.setAttribute('stroke', 'white');
+  dot.setAttribute('stroke-width', '1.4');
+  group.append(ring, dot);
+  point.element = group;
+  point.ring = ring;
+  point.dot = dot;
+  updatePointElement(point);
+  return group;
+}
+
+function updatePointElement(point) {
+  const paint = color(point.m.provider);
+  point.ring.setAttribute('stroke', paint);
+  point.ring.setAttribute('visibility', point.front ? 'visible' : 'hidden');
+  point.dot.setAttribute('fill', paint);
+}
+
+function updatePlotData(state, pick) {
+  const data = pick.filter(model => model.cost != null && model.cost >= 0 && model.score != null);
+  const {xExtent, yMin, yMax, frontier} = chartExtents(data, state.log);
+  const nextPoints = [];
+  const nextMap = new Map();
+
+  for (let index = 0; index < data.length; index++) {
+    const model = data[index];
+    const previous = state.pointMap.get(model.id);
+    const point = {
+      m: model, i: index,
+      xRatio: (state.log ? Math.log1p(model.cost) : model.cost) / xExtent,
+      yRatio: (yMax - model.score) / (yMax - yMin),
+      front: frontier.has(model.id),
+      element: previous?.element,
+      ring: previous?.ring,
+      dot: previous?.dot,
+      lastTransform: previous?.lastTransform,
+      inView: previous?.inView
+    };
+    if (!point.element) state.pointLayer.append(createPointElement(point));
+    else if (previous.front !== point.front || previous.m.provider !== model.provider) updatePointElement(point);
+    nextPoints.push(point);
+    nextMap.set(model.id, point);
+  }
+
+  for (const [id, point] of state.pointMap) {
+    if (!nextMap.has(id)) point.element.remove();
+  }
+
+  state.points = nextPoints;
+  state.pointMap = nextMap;
+  state.xExtent = xExtent;
+  state.yMin = yMin;
+  state.yMax = yMax;
+  state.ticks = state.width < 500 ? 3 : 6;
+  viewByMode[state.mode] = constrainView(viewByMode[state.mode] ?? baseView);
+  drawViewport(state);
+
+  const providerCounts = new Map();
+  for (const model of data) providerCounts.set(model.provider, (providerCounts.get(model.provider) ?? 0) + 1);
+  const legend = $('scatter').querySelector('.plot-legend');
+  legend.innerHTML = `${[...providerCounts].map(([name, count]) => `<button type="button" class="legend-item" data-provider-focus="${esc(name)}" aria-pressed="false" aria-label="聚焦 ${esc(name)}"><i style="background:${color(name)}"></i>${esc(name)} <small>${count}</small></button>`).join('')}<span><i class="front-ring"></i>有效前緣</span>`;
+  $('scatter').querySelector('.plot-meta p').textContent =
+    `已繪製 ${data.length} 個模型${pick.length > data.length ? `，另有 ${pick.length - data.length} 個模型缺少可繪製的數值` : ''}`;
+
+  if (state.active && !nextMap.has(state.active.m.id)) hidePlotTip();
+  connectPlotLegend();
+  syncInspector();
+}
+
+function renderScatter(pick) {
+  const chartWidth = $('scatter').clientWidth;
+  const chartHeight = window.innerWidth <= 600 ? 335 : 455;
+  const chartLog = $('logScale').checked, chartWidthMode = $('zoom').value;
+  const sameConfig = chartSnapshot && chartSnapshot.mode === loadedMode &&
+    chartSnapshot.width === chartWidth && chartSnapshot.height === chartHeight &&
+    chartSnapshot.log === chartLog && chartSnapshot.widthMode === chartWidthMode;
+  const samePick = chartSnapshot && chartSnapshot.pick.length === pick.length &&
+    pick.every((model, index) => model === chartSnapshot.pick[index]);
+  if (sameConfig && samePick) return;
+  chartSnapshot = {mode: loadedMode, width: chartWidth, height: chartHeight, log: chartLog, widthMode: chartWidthMode, pick: [...pick]};
+
+  const hasPlottableData = pick.some(model => model.cost != null && model.cost >= 0 && model.score != null);
+  if (sameConfig && plotState && hasPlottableData) {
+    hidePlotTip();
+    updatePlotData(plotState, pick);
+    return;
+  }
+
+  const restoreFocus = plotState && document.activeElement === plotState.svg;
+  hidePlotTip();
+  cancelAnimationFrame(viewFrame);
+  viewFrame = 0;
+  plotState = null;
+  const data = pick.filter(model => model.cost != null && model.cost >= 0 && model.score != null);
+  const host = $('scatter');
+  if (!data.length) {
+    const title = pick.length ? '所選模型缺少可繪製的數值' : '勾選模型後顯示散點圖';
+    const note = pick.length ? '散點圖需要有效的成本與智慧指數。' : '資料表的選取會同步到這裡。';
+    host.innerHTML = `<div class="plot-window plot-empty">${empty(title, note)}</div>`;
+    updatePlotControls(null);
+    syncInspector();
+    return;
+  }
+
+  const widthOption = Number($('zoom').value), padding = getComputedStyle(host);
+  const availableWidth = host.clientWidth - parseFloat(padding.paddingLeft) - parseFloat(padding.paddingRight) - 2;
+  const width = widthOption || Math.max(242, Math.floor(availableWidth));
+  const height = window.innerWidth <= 600 ? 335 : 455;
+  const left = width < 440 ? 44 : 57, right = width - (width < 440 ? 24 : 42);
+  const top = 41, bottom = height - 55;
+  const log = $('logScale').checked, ticks = width < 500 ? 3 : 6;
+  const axis = loadedMode === 'api' ? '混合單價 USD / 1M tokens' : '每任務成本 USD';
+
+  host.innerHTML = `<div class="plot-window"><svg xmlns="http://www.w3.org/2000/svg"
+    style="${widthOption ? 'min-width:' + width + 'px;' : ''}height:${height}px" viewBox="0 0 ${width} ${height}"
+    tabindex="0" role="application" aria-label="成本與智慧散點圖" aria-describedby="plotHelp plotKeys">
+    <defs><clipPath id="plotClip"><rect x="${left}" y="${top}" width="${right - left}" height="${bottom - top}"/></clipPath></defs>
+    <g class="plot-grid-lines"></g>
+    <path class="plot-axis" d="M${left} ${top}V${bottom}H${right}" fill="none"/>
+    <text class="plot-label" x="${left}" y="23">智慧指數 ↑</text>
+    <text class="plot-label" x="${right}" y="${height - 11}" text-anchor="end">${axis}${log ? ' · log₁₀(1+x)' : ''}</text>
+    <g clip-path="url(#plotClip)"><g class="plot-data"></g><g id="plotHighlight" visibility="hidden" pointer-events="none"></g></g>
+    <rect class="plot-surface" x="${left}" y="${top}" width="${right - left}" height="${bottom - top}" fill="transparent"/>
+  </svg></div>
+  <div class="plot-meta">
+    <div class="plot-legend"></div>
+    <p class="side-note"></p>
+  </div>
+  <p id="plotHelp" class="side-note plot-explainer">滾輪或雙指縮放，放大後拖曳平移。點選模型可固定詳情；點選圖例可聚焦供應商，再點一次還原。</p>
+  <details class="plot-help side-note">
+    <summary>鍵盤操作與有效前緣</summary>
+    <p id="plotKeys">聚焦圖表後，用 +／− 縮放、Shift＋方向鍵平移、0 重設。方向鍵切換模型，Enter 固定詳情，Esc 解除固定並關閉提示。</p>
+    <p>有效前緣表示沒有其他已選模型能同時做到成本不高、智慧指數不低，且至少一項更好。</p>
+  </details>`;
+
+  const svg = host.querySelector('svg');
+  plotState = {
+    mode: loadedMode, svg, points: [], pointMap: new Map(),
+    pointLayer: svg.querySelector('.plot-data'),
+    left, right, top, bottom, width, log,
+    xExtent: 1, yMin: 0, yMax: 1, ticks,
+    grid: svg.querySelector('.plot-grid-lines'), tickNodes: [], active: null, keyboardIndex: null
+  };
+  updatePlotData(plotState, pick);
+  connectPlotGestures(plotState);
+  syncInspector();
+  if (restoreFocus) svg.focus({preventScroll: true});
+}
+
+// Independent time-versus-intelligence view. It reads only the source's per-task time field.
+function timeFrontierIds(data) {
+  const sorted = [...data].sort((a, b) => a.time - b.time || b.score - a.score);
+  const frontier = new Set();
+  let bestAtLowerTime = -Infinity;
+  for (let start = 0; start < sorted.length;) {
+    const first = sorted[start];
+    let end = start;
+    while (end < sorted.length && sorted[end].time === first.time) {
+      if (sorted[end].score === first.score && first.score > bestAtLowerTime) frontier.add(sorted[end].id);
+      end++;
+    }
+    bestAtLowerTime = Math.max(bestAtLowerTime, first.score);
+    start = end;
+  }
+  return frontier;
+}
+
+function timeChartExtents(data, log) {
+  let maxTime = .01, minScore = 0, maxScore = 1;
+  for (const model of data) {
+    if (model.time > maxTime) maxTime = model.time;
+    if (model.score < minScore) minScore = model.score;
+    if (model.score > maxScore) maxScore = model.score;
+  }
+  const xStep = tickStep(0, maxTime * 1.04, 6);
+  const xExtent = log ? Math.log1p(maxTime * 1.08) : Math.ceil(maxTime * 1.04 / xStep) * xStep;
+  minScore *= 1.04;
+  maxScore *= 1.04;
+  const yStep = tickStep(minScore, maxScore, 6);
+  const yMin = Math.floor(minScore / yStep) * yStep;
+  const yMax = Math.ceil(maxScore / yStep) * yStep;
+  return {xExtent, yMin, yMax, frontier: timeFrontierIds(data)};
+}
+
+function timeUpdateControls(state) {
+  const scale = state ? (timeViewByMode[state.mode] ?? baseView).scale : 1;
+  $('timePlotOut').disabled = scale <= 1;
+  $('timePlotIn').disabled = !state || scale >= maxPlotScale;
+  $('timePlotReset').disabled = scale <= 1;
+  $('timePlotScale').value = Math.round(scale * 100) + '%';
+}
+
+function timeDrawViewport(state) {
+  const {left, right, top, bottom, log, xExtent, yMax, yMin, ticks} = state;
+  const view = timeViewByMode[state.mode] ?? baseView;
+  const x = ratio => left + (ratio - view.x) * view.scale * (right - left);
+  const y = ratio => top + (ratio - view.y) * view.scale * (bottom - top);
+  const xMin = view.x * xExtent, xMax = (view.x + 1 / view.scale) * xExtent;
+  const yExtent = yMax - yMin;
+  const visibleYMax = yMax - view.y * yExtent;
+  const visibleYMin = visibleYMax - yExtent / view.scale;
+  const xTicks = log ? Array.from({length: ticks + 1}, (_, i) => xMin + (xMax - xMin) * i / ticks) : tickValues(xMin, xMax, ticks);
+  const yTicks = tickValues(visibleYMin, visibleYMax, ticks);
+  const entries = [
+    ...yTicks.map(value => ({path: `M${left} ${y((yMax - value) / yExtent)}H${right}`, x: left - 7, y: y((yMax - value) / yExtent) + 4, anchor: 'end', text: fmt(value, 1)})),
+    ...xTicks.map(value => {
+      const xx = x(value / xExtent);
+      const minutes = log ? Math.expm1(value) : value;
+      return {path: `M${xx} ${top}V${bottom}`, x: xx, y: bottom + 19, anchor: 'middle', text: fmt(minutes, minutes < 1 ? 3 : 2)};
+    })
+  ];
+  for (let index = 0; index < entries.length; index++) {
+    let tick = state.tickNodes[index];
+    if (!tick) {
+      const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      const path = document.createElementNS(group.namespaceURI, 'path');
+      const label = document.createElementNS(group.namespaceURI, 'text');
+      path.setAttribute('class', 'plot-grid');
+      path.setAttribute('fill', 'none');
+      label.setAttribute('class', 'plot-tick');
+      group.append(path, label);
+      state.grid.append(group);
+      tick = {group, path, label};
+      state.tickNodes.push(tick);
+    }
+    const entry = entries[index];
+    tick.group.removeAttribute('display');
+    tick.path.setAttribute('d', entry.path);
+    tick.label.setAttribute('x', entry.x);
+    tick.label.setAttribute('y', entry.y);
+    tick.label.setAttribute('text-anchor', entry.anchor);
+    if (tick.label.textContent !== entry.text) tick.label.textContent = entry.text;
+  }
+  for (let index = entries.length; index < state.tickNodes.length; index++) state.tickNodes[index].group.setAttribute('display', 'none');
+  for (const point of state.points) {
+    point.x = x(point.xRatio);
+    point.y = y(point.yRatio);
+    const visible = inPlot(state, point);
+    const transform = `translate(${point.x} ${point.y})`;
+    if (point.lastTransform !== transform) { point.element.setAttribute('transform', transform); point.lastTransform = transform; }
+    if (point.inView !== visible) point.element.setAttribute('visibility', visible ? 'visible' : 'hidden');
+    point.inView = visible;
+  }
+  timeUpdateControls(state);
+}
+
+function setTimePlotView(state, next) {
+  const previous = timeViewByMode[state.mode] ?? baseView;
+  const view = constrainView(next);
+  if (view.x === previous.x && view.y === previous.y && view.scale === previous.scale) return;
+  timeViewByMode[state.mode] = view;
+  hidePlotTip();
+  if (!timeViewFrame) {
+    timeViewFrame = requestAnimationFrame(() => {
+      timeViewFrame = 0;
+      if (timePlotState === state) timeDrawViewport(state);
+    });
+  }
+  scheduleSavePreferences(180);
+}
+
+function moveTimePlotView(state, factor, before, after = before) {
+  const view = timeViewByMode[state.mode] ?? baseView;
+  const scale = clamp(view.scale * factor, 1, maxPlotScale);
+  const width = state.right - state.left, height = state.bottom - state.top;
+  setTimePlotView(state, {
+    scale,
+    x: view.x + (before.x - state.left) / (width * view.scale) - (after.x - state.left) / (width * scale),
+    y: view.y + (before.y - state.top) / (height * view.scale) - (after.y - state.top) / (height * scale)
+  });
+}
+
+function timeCenterZoom(factor) {
+  const state = timePlotState;
+  if (state) moveTimePlotView(state, factor, {x: (state.left + state.right) / 2, y: (state.top + state.bottom) / 2});
+}
+
+function updateTimePlotData(pick) {
+  const state = timePlotState;
+  if (!state) return;
+  const data = pick.filter(model => model.time != null && model.time >= 0 && model.score != null);
+  const {xExtent, yMin, yMax, frontier} = timeChartExtents(data, state.log);
+  const nextPoints = [], nextMap = new Map();
+  for (let index = 0; index < data.length; index++) {
+    const model = data[index], previous = state.pointMap.get(model.id);
+    const point = {
+      m: model, i: index,
+      xRatio: (state.log ? Math.log1p(model.time) : model.time) / xExtent,
+      yRatio: (yMax - model.score) / (yMax - yMin),
+      front: frontier.has(model.id),
+      element: previous?.element, ring: previous?.ring, dot: previous?.dot,
+      lastTransform: previous?.lastTransform, inView: previous?.inView
+    };
+    if (!point.element) {
+      const element = createPointElement(point);
+      element.classList.add('time-plot-point');
+      state.pointLayer.append(element);
+    } else if (previous.front !== point.front || previous.m.provider !== model.provider) updatePointElement(point);
+    nextPoints.push(point);
+    nextMap.set(model.id, point);
+  }
+  for (const [id, point] of state.pointMap) if (!nextMap.has(id)) point.element.remove();
+  state.points = nextPoints;
+  state.pointMap = nextMap;
+  state.xExtent = xExtent;
+  state.yMin = yMin;
+  state.yMax = yMax;
+  state.ticks = state.width < 500 ? 3 : 6;
+  timeViewByMode[state.mode] = constrainView(timeViewByMode[state.mode] ?? baseView);
+  timeDrawViewport(state);
+  const providerCounts = new Map();
+  for (const model of data) providerCounts.set(model.provider, (providerCounts.get(model.provider) ?? 0) + 1);
+  const legend = $('timeScatter').querySelector('.plot-legend');
+  legend.innerHTML = `${[...providerCounts].map(([name, count]) => `<button type="button" class="legend-item" data-provider-focus="${esc(name)}" aria-pressed="false" aria-label="聚焦 ${esc(name)}"><i style="background:${color(name)}"></i>${esc(name)} <small>${count}</small></button>`).join('')}<span><i class="front-ring"></i>有效前緣</span>`;
+  $('timeScatter').querySelector('.plot-meta p').textContent = `已繪製 ${data.length} 個模型${pick.length > data.length ? `，另有 ${pick.length - data.length} 個模型缺少任務時間或智慧指數` : ''}`;
+  if (state.active && !nextMap.has(state.active.m.id)) hidePlotTip();
+  connectTimePlotLegend();
+  paintPlotEmphasis();
+}
+
+function showTimePlotPoint(point, cx, cy) {
+  if (!timePlotState) return;
+  const state = timePlotState;
+  const {svg, points, left, right, top, bottom} = state;
+  const {m, x, y, front} = point, tip = $('plotTip'), paint = color(m.provider);
+  const peers = points.filter(other => other !== point && Math.abs(other.x - x) < .01 && Math.abs(other.y - y) < .01);
+  state.active = point;
+  inspectModel(m, 'time');
+  const group = svg.querySelector('#timePlotHighlight');
+  group.setAttribute('visibility', 'visible');
+  group.innerHTML = `<path d="M${left} ${y}H${right} M${x} ${top}V${bottom}" stroke="${paint}" stroke-opacity=".55" stroke-dasharray="3 4"/><circle cx="${x}" cy="${y}" r="12" fill="none" stroke="${paint}" stroke-width="1.5"/><circle cx="${x}" cy="${y}" r="6" fill="${paint}" stroke="white" stroke-width="1.5"/>`;
+  tip.innerHTML = `<div class="tip-provider">${esc(m.provider)}${front ? '｜時間有效前緣' : ''}</div><strong>${esc(m.name)}</strong><div class="tip-values"><div><span>智慧指數</span><b>${fmt(m.score)}</b></div><div><span>時間 / 任務</span><b>${fmt(m.time)} 分鐘</b></div></div>${m.cost != null ? `<div class="tip-peer"><span class="tip-provider">成本 / 任務</span><strong>${chartCost(m.cost)}</strong></div>` : ''}${peers.length ? `<div class="tip-peer"><span class="tip-provider">相同座標的模型（${peers.length}）</span>${peers.map(peer => `<strong>${esc(peer.m.provider + ' / ' + peer.m.name)}</strong>`).join('')}</div>` : ''}`;
+  tip.style.maxHeight = Math.max(150, window.innerHeight - 24) + 'px';
+  tip.style.overflow = 'hidden';
+  tip.classList.add('visible');
+  const rect = tip.getBoundingClientRect(), pad = 12;
+  const tx = cx + 18 + rect.width > window.innerWidth - pad ? cx - rect.width - 18 : cx + 18;
+  const ty = cy - rect.height - 16 < pad ? cy + 18 : cy - rect.height - 16;
+  tip.style.left = Math.max(pad, Math.min(tx, window.innerWidth - rect.width - pad)) + 'px';
+  tip.style.top = Math.max(pad, Math.min(ty, window.innerHeight - rect.height - pad)) + 'px';
+}
+
+function connectTimePlotGestures(state) {
+  const {svg} = state;
+  const pointers = new Map();
+  let dragged = false;
+  svg.addEventListener('wheel', event => {
+    const location = plotCoordinates(state, event.clientX, event.clientY);
+    if (!location || !inPlot(state, location) || !event.deltaY) return;
+    const scale = (timeViewByMode[state.mode] ?? baseView).scale;
+    if (event.deltaY > 0 && scale <= 1) return;
+    event.preventDefault();
+    const multiplier = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? svg.clientHeight : 1;
+    moveTimePlotView(state, Math.exp(-clamp(event.deltaY * multiplier, -210, 210) * .003), location);
+  }, {passive: false});
+  svg.onpointerdown = event => {
+    const location = plotCoordinates(state, event.clientX, event.clientY);
+    if (event.button !== 0 || !location || !inPlot(state, location) || pointers.size >= 2) return;
+    if (!pointers.size) dragged = false;
+    pointers.set(event.pointerId, location);
+    svg.setPointerCapture(event.pointerId);
+    if (pointers.size === 2) hidePlotTip();
+  };
+  svg.onpointermove = event => {
+    if (pointers.has(event.pointerId)) {
+      const after = plotCoordinates(state, event.clientX, event.clientY);
+      if (!after) return;
+      const before = pointers.get(event.pointerId);
+      const other = [...pointers.entries()].find(([id]) => id !== event.pointerId)?.[1];
+      if (other) {
+        const distance = Math.hypot(before.x - other.x, before.y - other.y);
+        const nextDistance = Math.hypot(after.x - other.x, after.y - other.y);
+        const midpoint = point => ({x: (point.x + other.x) / 2, y: (point.y + other.y) / 2});
+        moveTimePlotView(state, nextDistance / Math.max(1, distance), midpoint(before), midpoint(after));
+      } else {
+        if (!dragged && Math.hypot(after.x - before.x, after.y - before.y) < 4) return;
+        moveTimePlotView(state, 1, before, after);
+      }
+      pointers.set(event.pointerId, after);
+      dragged = true;
+      svg.classList.add('is-panning');
+      hidePlotTip();
+      return;
+    }
+    if (event.pointerType === 'touch' || pointers.size) return;
+    cancelAnimationFrame(timeHoverFrame);
+    timeHoverFrame = requestAnimationFrame(() => {
+      timeHoverFrame = 0;
+      const matrix = svg.getScreenCTM();
+      if (!matrix || timePlotState !== state) return;
+      const point = nearestPlotPoint(state.points, event.clientX, event.clientY, matrix);
+      if (!point) hidePlotTip();
+      else if (state.active !== point) showTimePlotPoint(point, event.clientX, event.clientY);
+    });
+  };
+  function finishPointer(event) {
+    if (!pointers.delete(event.pointerId) || pointers.size) return;
+    svg.classList.remove('is-panning');
+    if (dragged || event.type !== 'pointerup') return;
+    const matrix = svg.getScreenCTM();
+    if (!matrix) return;
+    const point = nearestPlotPoint(state.points, event.clientX, event.clientY, matrix, 40);
+    if (point) {
+      showTimePlotPoint(point, event.clientX, event.clientY);
+      pinModel(point.m, 'time');
+    } else hidePlotTip();
+  }
+  svg.onpointerup = finishPointer;
+  svg.onpointercancel = finishPointer;
+  svg.onlostpointercapture = finishPointer;
+  svg.onpointerleave = event => { if (event.pointerType !== 'touch' && !pointers.size) hidePlotTip(); };
+  svg.onkeydown = event => {
+    if (event.key === 'Escape') { state.keyboardIndex = null; clearModelPin(); hidePlotTip(); return; }
+    if (event.key === 'Enter' && state.active) { event.preventDefault(); pinModel(state.active.m, 'time'); $('plotReadout').textContent = '已固定 ' + state.active.m.name; return; }
+    if (['+', '=', '-', '0'].includes(event.key)) {
+      event.preventDefault();
+      if (event.key === '0') setTimePlotView(state, baseView);
+      else timeCenterZoom(event.key === '-' ? 1 / 1.5 : 1.5);
+      return;
+    }
+    const arrows = {ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1]};
+    const direction = arrows[event.key];
+    if (direction && event.shiftKey) {
+      event.preventDefault();
+      const view = timeViewByMode[state.mode] ?? baseView;
+      setTimePlotView(state, {...view, x: view.x + direction[0] * .15 / view.scale, y: view.y + direction[1] * .15 / view.scale});
+      return;
+    }
+    if (!direction && event.key !== 'Home' && event.key !== 'End') return;
+    event.preventDefault();
+    const inView = state.points.filter(point => point.inView);
+    const matrix = svg.getScreenCTM();
+    if (!inView.length || !matrix) return;
+    const previous = inView.findIndex(point => point.i === (state.active?.i ?? state.keyboardIndex));
+    const backward = event.key === 'ArrowLeft' || event.key === 'ArrowUp';
+    const last = inView.length - 1;
+    let index = 0;
+    if (event.key === 'End') index = last;
+    else if (direction) index = previous < 0 ? (backward ? last : 0) : (previous + (backward ? -1 : 1) + inView.length) % inView.length;
+    const point = inView[index];
+    state.keyboardIndex = point.i;
+    const position = new DOMPoint(point.x, point.y).matrixTransform(matrix);
+    showTimePlotPoint(point, position.x, position.y);
+    $('plotReadout').textContent = `${point.m.name}，智慧 ${fmt(point.m.score)}，時間 ${fmt(point.m.time)} 分鐘`;
+  };
+  svg.onblur = hidePlotTip;
+}
+
+function connectTimePlotLegend() {
+  const legend = $('timeScatter').querySelector('.plot-legend');
+  if (!legend) return;
+  const buttons = [...legend.querySelectorAll('[data-provider-focus]')];
+  legend.addEventListener('pointerover', event => {
+    if (event.pointerType === 'touch') return;
+    const button = event.target.closest('[data-provider-focus]');
+    if (!button || previewProvider === button.dataset.providerFocus) return;
+    previewProvider = button.dataset.providerFocus;
+    paintPlotEmphasis();
+  });
+  legend.addEventListener('pointerleave', () => { previewProvider = null; paintPlotEmphasis(); });
+  legend.addEventListener('focusin', event => { previewProvider = event.target.closest('[data-provider-focus]')?.dataset.providerFocus ?? null; paintPlotEmphasis(); });
+  legend.addEventListener('focusout', () => { previewProvider = null; paintPlotEmphasis(); });
+  legend.addEventListener('click', event => {
+    const button = event.target.closest('[data-provider-focus]');
+    if (!button) return;
+    const provider = button.dataset.providerFocus;
+    providerSpotlight = providerSpotlight === provider ? null : provider;
+    previewProvider = null;
+    paintPlotEmphasis();
+  });
+}
+
+function renderTimeScatter(pick) {
+  const host = $('timeScatter');
+  const chartWidth = host.clientWidth;
+  const chartHeight = window.innerWidth <= 600 ? 335 : 455;
+  const chartLog = $('timeLogScale').checked, chartWidthMode = $('zoom').value;
+  const sameConfig = timeChartSnapshot && timeChartSnapshot.mode === loadedMode &&
+    timeChartSnapshot.width === chartWidth && timeChartSnapshot.height === chartHeight &&
+    timeChartSnapshot.log === chartLog && timeChartSnapshot.widthMode === chartWidthMode;
+  const samePick = timeChartSnapshot && timeChartSnapshot.pick.length === pick.length &&
+    pick.every((model, index) => model === timeChartSnapshot.pick[index]);
+  if (sameConfig && samePick) return;
+  timeChartSnapshot = {mode: loadedMode, width: chartWidth, height: chartHeight, log: chartLog, widthMode: chartWidthMode, pick: [...pick]};
+  const data = pick.filter(model => model.time != null && model.time >= 0 && model.score != null);
+  if (!data.length) {
+    hidePlotTip();
+    timePlotState = null;
+    const title = loadedMode === 'api' ? '官方 API 未提供每任務時間' : pick.length ? '所選模型缺少可繪製的數值' : '勾選模型後顯示效率散點圖';
+    const note = loadedMode === 'api'
+      ? '此來源提供輸出速度與首 Token 延遲，但沒有每任務時間；不會以其他指標代替。切回原網頁即時表格即可比較。'
+      : pick.length ? '散點圖需要有效的每任務時間與智慧指數。' : '資料表的選取會同步到這裡。';
+    host.innerHTML = `<div class="plot-window plot-empty">${empty(title, note)}</div>`;
+    timeUpdateControls(null);
+    syncInspector();
+    return;
+  }
+  const widthOption = Number($('zoom').value), padding = getComputedStyle(host);
+  const availableWidth = host.clientWidth - parseFloat(padding.paddingLeft) - parseFloat(padding.paddingRight) - 2;
+  const width = widthOption || Math.max(242, Math.floor(availableWidth));
+  const height = window.innerWidth <= 600 ? 335 : 455;
+  const left = width < 440 ? 44 : 57, right = width - (width < 440 ? 24 : 42);
+  const top = 41, bottom = height - 55;
+  const log = $('timeLogScale').checked, ticks = width < 500 ? 3 : 6;
+  host.innerHTML = `<div class="plot-window"><svg xmlns="http://www.w3.org/2000/svg" style="${widthOption ? 'min-width:' + width + 'px;' : ''}height:${height}px" viewBox="0 0 ${width} ${height}" tabindex="0" role="application" aria-label="每任務時間與智慧指數散點圖" aria-describedby="timePlotHelp timePlotKeys">
+    <defs><clipPath id="timePlotClip"><rect x="${left}" y="${top}" width="${right - left}" height="${bottom - top}"/></clipPath></defs>
+    <g class="plot-grid-lines"></g><path class="plot-axis" d="M${left} ${top}V${bottom}H${right}" fill="none"/>
+    <text class="plot-label" x="${left}" y="23">智慧指數 ↑</text><text class="plot-label" x="${right}" y="${height - 11}" text-anchor="end">每任務時間（分鐘）${log ? ' · log₁₀(1+x)' : ''}</text>
+    <g clip-path="url(#timePlotClip)"><g class="time-plot-data"></g><g id="timePlotHighlight" visibility="hidden" pointer-events="none"></g></g>
+    <rect class="plot-surface" x="${left}" y="${top}" width="${right - left}" height="${bottom - top}" fill="transparent"/>
+  </svg></div><div class="plot-meta"><div class="plot-legend"></div><p class="side-note"></p></div>
+  <p id="timePlotHelp" class="side-note plot-explainer">滾輪或雙指縮放，放大後拖曳平移。點選模型可固定詳情；圖例可聚焦供應商。</p>
+  <details class="plot-help side-note"><summary>鍵盤操作與有效前緣</summary><p id="timePlotKeys">聚焦圖表後，用 +／− 縮放、Shift＋方向鍵平移、0 重設。方向鍵切換模型，Enter 固定詳情，Esc 解除固定。</p><p>有效前緣表示沒有其他已選模型能同時做到時間不長、智慧指數不低，且至少一項更好。</p></details>`;
+  const svg = host.querySelector('svg');
+  timePlotState = {mode: loadedMode, svg, points: [], pointMap: new Map(), pointLayer: svg.querySelector('.time-plot-data'), left, right, top, bottom, width, log, xExtent: 1, yMin: 0, yMax: 1, ticks, grid: svg.querySelector('.plot-grid-lines'), tickNodes: [], active: null, keyboardIndex: null};
+  updateTimePlotData(pick);
+  connectTimePlotGestures(timePlotState);
+  syncInspector();
+}
+
+$('timePlotIn').onclick = () => timeCenterZoom(1.5);
+$('timePlotOut').onclick = () => timeCenterZoom(1 / 1.5);
+$('timePlotReset').onclick = () => { if (timePlotState) setTimePlotView(timePlotState, baseView); };
+
+window.addEventListener('scroll', hidePlotTip, true);
+window.addEventListener('blur', hidePlotTip);
+let plotResizeTimer;
+window.addEventListener('resize', () => {
+  hidePlotTip();
+  clearTimeout(plotResizeTimer);
+  plotResizeTimer = setTimeout(() => {
+    updateTableMetrics();
+    renderScatter(chosen());
+    renderTimeScatter(chosen());
+  }, 120);
+});
+
+// Keep the source's full response visible in the expandable connection record.
+// View-only exploration state. Source data and selection remain authoritative.
+let inspectedModel = null;
+let inspectedChart = 'cost';
+let providerSpotlight = null;
+let previewProvider = null;
+let inspectorSnapshot = '';
+let inspectedRow = null;
+
+function paintPlotEmphasis() {
+  const provider = previewProvider ?? providerSpotlight;
+  const pinned = pinnedByMode[loadedMode];
+  const activeId = inspectedModel?.id;
+  const apply = (state, hostId, frontierOnly) => {
+    if (!state) return;
+    for (const point of state.points) {
+      point.element.classList.toggle('is-muted', !!((provider && point.m.provider !== provider) || (frontierOnly && !point.front)));
+      point.element.classList.toggle('is-pinned', point.m.id === pinned);
+      point.element.classList.toggle('is-cross-highlight', point.m.id === activeId);
+    }
+    $(hostId).querySelectorAll('[data-provider-focus]').forEach(button => {
+      button.setAttribute('aria-pressed', String(button.dataset.providerFocus === providerSpotlight));
+    });
+  };
+  apply(plotState, 'scatter', $('frontierFocus').checked);
+  apply(timePlotState, 'timeScatter', $('timeFrontierFocus').checked);
+}
+
+
+function inspectModel(model, source = inspectedChart) {
+  if (!model) {
+    inspectedModel = null;
+    inspectorSnapshot = '';
+    $('inspectorState').textContent = '等待選取';
+    $('inspectProvider').textContent = '尚未選取模型';
+    $('inspectName').textContent = '從圖表開始探索。';
+    for (const id of ['inspectScore', 'inspectCost', 'inspectTime', 'inspectLatency', 'inspectContext']) $(id).textContent = '—';
+    $('inspectFrontier').hidden = true;
+    $('pinInspection').disabled = true;
+    $('pinInspection').setAttribute('aria-pressed', 'false');
+    $('pinInspection').querySelector('span').textContent = '固定此模型';
+    $('findModel').disabled = true;
+    $('inspectNote').textContent = '勾選資料表中的模型後，即可在圖中查看。';
+    paintPlotEmphasis();
+    return;
+  }
+  inspectedChart = source;
+  const pinned = pinnedByMode[loadedMode] === model.id;
+  const costPoint = plotState?.points.find(point => point.m.id === model.id);
+  const timePoint = timePlotState?.points.find(point => point.m.id === model.id);
+  const point = source === 'time' ? timePoint : costPoint;
+  const inTable = visibleIndex.has(model.id);
+  const key = [loadedMode, model.id, pinned, inTable, source, costPoint?.front, timePoint?.front].join('|');
+  if (inspectedModel === model && inspectorSnapshot === key) return;
+  inspectedModel = model;
+  inspectorSnapshot = key;
+  const api = loadedMode === 'api';
+  $('inspector').style.setProperty('--model-color', color(model.provider));
+  $('inspectorState').textContent = pinned ? '已固定' : '隨指標查看';
+  $('inspectProvider').textContent = model.provider;
+  $('inspectName').textContent = model.name;
+  $('inspectScore').textContent = fmt(model.score);
+  $('inspectCostLabel').textContent = api ? '混合單價 / 1M tokens（USD）' : '成本 / 任務（USD）';
+  $('inspectCost').textContent = model.cost == null ? '—' : chartCost(model.cost);
+  $('inspectTimeLabel').textContent = api ? '輸出速度（t/s）' : '時間 / 任務（分鐘）';
+  $('inspectTime').textContent = fmt(api ? model.speed : model.time);
+  $('inspectLatency').textContent = fmt(model.latency);
+  $('inspectContext').textContent = model.context ?? '—';
+  $('inspectFrontier').textContent = point?.front ? (source === 'time' ? '位於時間有效前緣' : '位於成本有效前緣') : '';
+  $('inspectFrontier').hidden = !point?.front;
+  $('pinInspection').disabled = false;
+  $('pinInspection').setAttribute('aria-pressed', String(pinned));
+  $('pinInspection').querySelector('span').textContent = pinned ? '解除固定' : '固定此模型';
+  $('findModel').disabled = !inTable;
+  $('inspectNote').textContent = !inTable ? '此模型不在目前的篩選結果內。'
+    : pinned ? '詳情已固定，仍可在任一圖表查看其他模型。' : '點選任一圖表中的模型可固定詳情。';
+  paintPlotEmphasis();
+}
+
+function syncInspector() {
+  const costPoints = plotState?.points ?? [];
+  const timePoints = timePlotState?.points ?? [];
+  if (!costPoints.length && !timePoints.length) {
+    if (models.length && pinnedByMode[loadedMode]) {
+      delete pinnedByMode[loadedMode];
+      savePreferences();
+    }
+    inspectModel(null);
+    return;
+  }
+  let source = inspectedChart;
+  let points = source === 'time' ? timePoints : costPoints;
+  if (!points.length) {
+    source = source === 'time' ? 'cost' : 'time';
+    points = source === 'time' ? timePoints : costPoints;
+  }
+  let point = points.find(point => point.m.id === pinnedByMode[loadedMode]);
+  if (!point && pinnedByMode[loadedMode]) {
+    points = source === 'time' ? costPoints : timePoints;
+    source = source === 'time' ? 'cost' : 'time';
+    point = points.find(point => point.m.id === pinnedByMode[loadedMode]);
+  }
+  if (pinnedByMode[loadedMode] && !point) {
+    delete pinnedByMode[loadedMode];
+    savePreferences();
+  }
+  point ??= points.find(point => point.m === inspectedModel);
+  point ??= points.reduce((best, candidate) => candidate.m.score > best.m.score ? candidate : best);
+  inspectModel(point.m, source);
+}
+
+function inspectPoint(point) {
+  if (!pinnedByMode[loadedMode]) inspectModel(point.m, 'cost');
+}
+
+function pinModel(model, source = inspectedChart) {
+  pinnedByMode[loadedMode] = model.id;
+  inspectModel(model, source);
+  paintPlotEmphasis();
+  scheduleSavePreferences();
+}
+
+function clearModelPin() {
+  delete pinnedByMode[loadedMode];
+  inspectModel(inspectedModel, inspectedChart);
+  paintPlotEmphasis();
+  scheduleSavePreferences();
+}
+
+$('pinInspection').addEventListener('click', () => {
+  if (!inspectedModel) return;
+  if (pinnedByMode[loadedMode] === inspectedModel.id) clearModelPin();
+  else pinModel(inspectedModel, inspectedChart);
+});
+
+$('findModel').addEventListener('click', () => {
+  const id = inspectedModel?.id;
+  if (!id) return;
+  const row = revealModelRow(id);
+  if (!row) return;
+  if (inspectedRow?.isConnected) inspectedRow.classList.remove('inspected');
+  inspectedRow = row;
+  row.classList.add('inspected');
+  row.querySelector('.model-focus').focus({preventScroll: true});
+});
+
+
+$('frontierFocus').addEventListener('change', () => {
+  paintPlotEmphasis();
+  scheduleSavePreferences();
+});
+$('timeFrontierFocus').addEventListener('change', () => {
+  paintPlotEmphasis();
+  scheduleSavePreferences();
+});
+$('timeLogScale').addEventListener('change', () => {
+  savePreferences();
+  renderTimeScatter(chosen());
+});
+
+function connectPlotLegend() {
+  const legend = $('scatter').querySelector('.plot-legend');
+  if (!legend) return;
+  const buttons = [...legend.querySelectorAll('[data-provider-focus]')];
+  previewProvider = null;
+  legend.addEventListener('pointerover', event => {
+    if (event.pointerType === 'touch') return;
+    const button = event.target.closest('[data-provider-focus]');
+    if (!button || previewProvider === button.dataset.providerFocus) return;
+    previewProvider = button.dataset.providerFocus;
+    paintPlotEmphasis();
+  });
+  legend.addEventListener('pointerleave', () => { previewProvider = null; paintPlotEmphasis(); });
+  legend.addEventListener('focusin', event => {
+    previewProvider = event.target.closest('[data-provider-focus]')?.dataset.providerFocus ?? null;
+    paintPlotEmphasis();
+  });
+  legend.addEventListener('focusout', () => { previewProvider = null; paintPlotEmphasis(); });
+  legend.addEventListener('click', event => {
+    const button = event.target.closest('[data-provider-focus]');
+    if (!button) return;
+    const provider = button.dataset.providerFocus;
+    providerSpotlight = providerSpotlight === provider ? null : provider;
+    previewProvider = null;
+    paintPlotEmphasis();
+  });
+  paintPlotEmphasis();
+}
+
+// Navigation reflects whichever destination is nearest the reading position.
+const navigation = [...document.querySelectorAll('.masthead nav a')];
+const visibleSections = new Set();
+const sectionObserver = new IntersectionObserver(entries => {
+  for (const entry of entries) {
+    if (entry.isIntersecting) visibleSections.add(entry.target.id);
+    else visibleSections.delete(entry.target.id);
+  }
+  const active = [...visibleSections].sort((a, b) => Math.abs($(a).getBoundingClientRect().top - 130) - Math.abs($(b).getBoundingClientRect().top - 130))[0];
+  if (active) navigation.forEach(link => {
+    const current = link.getAttribute('href') === '#' + active;
+    link.classList.toggle('current', current);
+    if (current) link.setAttribute('aria-current', 'location');
+    else link.removeAttribute('aria-current');
+  });
+}, {rootMargin: '-15% 0px -40% 0px'});
+for (const id of ['chart', 'timeChart', 'setup', 'database']) sectionObserver.observe($(id));
+
+
+let filterRenderTimer = 0;
+for (const id of ['search', 'exclude', 'match', 'minScore', 'maxCost', 'selectedOnly']) {
+  $(id).addEventListener('input', () => {
+    anchor = null;
+    scheduleSavePreferences();
+    clearTimeout(filterRenderTimer);
+    const delay = id === 'search' || id === 'exclude' ? 130 : 70;
+    filterRenderTimer = setTimeout(() => {
+      filterRenderTimer = 0;
+      tableWrap.scrollTop = 0;
+      render();
+    }, delay);
+  });
+}
+for (const id of ['logScale', 'zoom']) {
+  $(id).onchange = () => {
+    savePreferences();
+    renderScatter(chosen());
+    renderTimeScatter(chosen());
+  };
+}
+
+$('clear').onclick = () => {
+  if (everLoaded) selectionByMode[loadedMode] = [];
+  if ($('selectedOnly').checked) tableWrap.scrollTop = 0;
+  selected.clear();
+  anchor = null;
+  savePreferences();
+  render();
+};
+$('selectAll').onclick = () => {
+  if ($('selectedOnly').checked) tableWrap.scrollTop = 0;
+  selected = new Set(models.map(model => model.id));
+  if (everLoaded) saveSelection();
+  render();
+};
+$('selectVisible').onclick = () => {
+  visible().forEach(model => selected.add(model.id));
+  if (everLoaded) saveSelection();
+  render();
+};
+
+$('providerAll').onclick = () => {
+  providerSet = new Set(models.length ? models.map(model => model.provider) : SOURCES.map(source => source[1]));
+  tableWrap.scrollTop = 0;
+  scheduleSavePreferences();
+  renderProviders();
+  render();
+};
+$('providerPair').onclick = () => {
+  providerSet = new Set(['Aster', 'Boreal']);
+  tableWrap.scrollTop = 0;
+  scheduleSavePreferences();
+  renderProviders();
+  render();
+};
+$('reset').onclick = () => {
+  ['search', 'exclude', 'minScore', 'maxCost'].forEach(id => $(id).value = '');
+  $('selectedOnly').checked = false;
+  $('match').value = 'any';
+  sortKey = 'score';
+  sortDir = 'desc';
+  anchor = null;
+  $('providerAll').click();
+};
+
+document.querySelectorAll('[data-sort]').forEach(button => {
+  button.onclick = () => {
+    if (sortKey === button.dataset.sort) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    else {
+      sortKey = button.dataset.sort;
+      sortDir = 'asc';
+    }
+    anchor = null;
+    savePreferences();
+    render();
+  };
+});
+
+window.addEventListener('pagehide', () => {
+  if (preferenceTimer != null) {
+    clearTimeout(preferenceTimer);
+    preferenceTimer = null;
+  }
+  if (preferenceWriteTimer) {
+    clearTimeout(preferenceWriteTimer);
+    preferenceWriteTimer = 0;
+  }
+  savePreferences();
+});
+$('export').onclick=()=>{let data=chosen().length?chosen():visible();if(!data.length)return notify('尚無可匯出的資料');const api=loadedMode==='api',lines=[['Provider','Model','Intelligence',api?'Blended USD per 1M tokens (3:1)':'USD per task',api?'Output tokens per second':'Minutes per task','Latency seconds',api?'Output USD per 1M tokens':'Error percent','Context','Demo loaded at','Source'],...data.map(m=>[m.provider,m.name,m.score,m.cost,api?m.speed:m.time,m.latency,api?m.output:m.error,m.context,lastFetched.toISOString(),m.source])];const csv='\ufeff'+lines.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""').replace(/^[=+@\-\t\r]/,"'")+'"').join(',')).join('\r\n'),url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='model-lens-demo-'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);notify('已匯出 '+data.length+' 個示範模型')};
+restorePreferences();
+loadDemo();
+
+  </script>
+</body>
+</html>
