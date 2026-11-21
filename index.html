@@ -778,30 +778,44 @@ function colorDistance(a, b) {
   return left.reduce((sum, value, i) => sum + (value - right[i]) ** 2, 0);
 }
 
+// Thinking-effort variants are separate data points, but share their model family's color.
+function modelColorName(model) {
+  return model.name
+    .replace(/\s*[（(]\s*(?:none|minimal|low|medium|high|xhigh|extra[ -]?high|ultra[ -]?high|max)\s*[)）]/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function updateModelColors(pick) {
   chartModelColors = new Map();
-  const groups = new Map();
+  const providers = new Map();
   for (const model of pick) {
-    if (!groups.has(model.provider)) groups.set(model.provider, []);
-    groups.get(model.provider).push(model);
+    if (!providers.has(model.provider)) providers.set(model.provider, []);
+    providers.get(model.provider).push(model);
   }
-  // Comparing providers: one consistent color per company, regardless of model count.
-  if (groups.size > 1) {
+  // Multiple API providers: color by provider, not by model.
+  if (providers.size > 1) {
     for (const model of pick) chartModelColors.set(model.id, color(model.provider));
     return;
   }
-  // Comparing models within one provider: assign each model a distinct color.
-  for (const group of groups.values()) {
-    if (group.length === 1) {
-      chartModelColors.set(group[0].id, color(group[0].provider));
+  // One API provider: color by model family, ignoring reasoning-effort labels.
+  for (const [provider, group] of providers) {
+    const families = new Map();
+    for (const model of group) {
+      const key = modelColorName(model).toLowerCase();
+      if (!families.has(key)) families.set(key, []);
+      families.get(key).push(model);
+    }
+    if (families.size === 1) {
+      for (const model of group) chartModelColors.set(model.id, color(provider));
       continue;
     }
     const used = new Set();
-    for (const model of [...group].sort((a, b) => String(a.id).localeCompare(String(b.id)))) {
-      const key = loadedMode + ':' + model.id;
+    for (const [name, variants] of [...families].sort(([a], [b]) => a.localeCompare(b))) {
+      const key = loadedMode + ':' + provider + ':' + name;
       let paint = modelColorMemory.get(key);
       if (!paint || used.has(paint)) {
-        const available = [color(model.provider), ...MODEL_PALETTE].filter(value => !used.has(value));
+        const available = [color(provider), ...MODEL_PALETTE].filter(value => !used.has(value));
         if (available.length) {
           paint = available.reduce((best, candidate) => {
             const score = Math.min(...[...used].map(value => colorDistance(candidate, value)));
@@ -814,30 +828,40 @@ function updateModelColors(pick) {
         modelColorMemory.set(key, paint);
       }
       used.add(paint);
-      chartModelColors.set(model.id, paint);
+      for (const model of variants) chartModelColors.set(model.id, paint);
     }
   }
 }
 
 function chartLegend(data) {
-  const groups = new Map();
+  const providers = new Map();
   for (const model of data) {
-    if (!groups.has(model.provider)) groups.set(model.provider, []);
-    groups.get(model.provider).push(model);
+    if (!providers.has(model.provider)) providers.set(model.provider, []);
+    providers.get(model.provider).push(model);
   }
-  const singleProvider = groups.size === 1;
-  const providers = [...groups].map(([name, group]) => {
+  const singleProvider = providers.size === 1;
+  const families = new Map();
+  if (singleProvider) {
+    for (const model of data) {
+      const name = modelColorName(model);
+      const key = name.toLowerCase();
+      if (!families.has(key)) families.set(key, {name, model});
+    }
+  }
+  const providerLegend = [...providers].map(([name, group]) => {
     const swatches = singleProvider
-      ? group.slice(0, 4).map(model => `<i style="background:${modelPaint(model)}"></i>`).join('')
+      ? [...families.values()].slice(0, 4).map(({model}) =>
+        `<i style="background:${modelPaint(model)}"></i>`).join('')
       : `<i style="background:${color(name)}"></i>`;
     return `<button type="button" class="legend-item" data-provider-focus="${esc(name)}" aria-pressed="false" aria-label="聚焦 ${esc(name)}"><span class="provider-swatches">${swatches}</span>${esc(name)} <small>${group.length}</small></button>`;
   }).join('');
-  const peers = singleProvider ? [...groups.values()].filter(group => group.length > 1).flat() : [];
-  const details = peers.length && peers.length <= 8
-    ? peers.map(model => `<span class="model-color-key"><i style="background:${modelPaint(model)}"></i>${esc(model.name)}</span>`).join('')
-    : peers.length > 8 ? '<span class="color-key-note">點位依模型配色；移到點上查看名稱</span>' : '';
-  return providers + details + '<span><i class="front-ring"></i>有效前緣</span>';
+  const distinct = [...families.values()];
+  const details = distinct.length > 1 && distinct.length <= 8
+    ? distinct.map(({name, model}) => `<span class="model-color-key"><i style="background:${modelPaint(model)}"></i>${esc(name)}</span>`).join('')
+    : distinct.length > 8 ? '<span class="color-key-note">點位依模型系列配色；移到點上查看名稱</span>' : '';
+  return providerLegend + details + '<span><i class="front-ring"></i>有效前緣</span>';
 }
+
 let models=[],selected=new Set(),providerSet=new Set(['OpenAI','Anthropic']),busy=false,loadedMode='web',lastFetched=null,anchor=null,drag=null,everLoaded=false;
 let sortKey='score',sortDir='desc';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
