@@ -123,6 +123,10 @@ details summary:hover { text-decoration: underline; }
 .plot-legend .legend-item small { color: var(--muted); font-size: 10px; }
 .plot-legend>span { display: inline-flex; align-items: center; gap: 6px; padding-inline: 6px; }
 .plot-legend i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; }
+.plot-legend .provider-swatches { display: inline-flex; align-items: center; gap: 2px; }
+.plot-legend .model-color-key { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px; font-size: 11px; color: var(--ink); }
+.plot-legend .model-color-key i { width: 9px; height: 9px; }
+.plot-legend .color-key-note { font-size: 11px; }
 .plot-legend .front-ring { width: 10px; height: 10px; border: 1px solid var(--muted); }
 .plot-meta>p { padding-top: 5px; }
 .side-note { color: var(--muted); font-size: 11px; }
@@ -756,6 +760,76 @@ footer { font-size: 12px; }
 const SOURCE='https://artificialanalysis.ai/providers/';
 const SOURCES=[['openai','OpenAI','#8fb9ff'],['anthropic','Anthropic','#f2a783'],['google','Google','#84d9bd'],['deepseek','DeepSeek','#c6a5ed'],['meta','Meta','#e4cc81']];
 const $=id=>document.getElementById(id),color=p=>SOURCES.find(s=>s[1]===p)?.[2]||'#acb8b2';
+const MODEL_PALETTE = [
+  '#f0c567', '#9e9bf3', '#7fd9da', '#ec8dae', '#aad879', '#f7a26b',
+  '#86b6f4', '#d2a6f2', '#f3df85', '#7cd4aa', '#eaa7c8', '#b2bef8',
+  '#f29a87', '#a4d6ed', '#c7dd85', '#d8a6ff'
+];
+const modelColorMemory = new Map();
+let chartModelColors = new Map();
+
+function modelPaint(model) {
+  return chartModelColors.get(model.id) ?? color(model.provider);
+}
+
+function colorDistance(a, b) {
+  const rgb = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+  const left = rgb(a), right = rgb(b);
+  return left.reduce((sum, value, i) => sum + (value - right[i]) ** 2, 0);
+}
+
+function updateModelColors(pick) {
+  chartModelColors = new Map();
+  const groups = new Map();
+  for (const model of pick) {
+    if (!groups.has(model.provider)) groups.set(model.provider, []);
+    groups.get(model.provider).push(model);
+  }
+  for (const group of groups.values()) {
+    if (group.length === 1) {
+      chartModelColors.set(group[0].id, color(group[0].provider));
+      continue;
+    }
+    const used = new Set();
+    for (const model of [...group].sort((a, b) => String(a.id).localeCompare(String(b.id)))) {
+      const key = loadedMode + ':' + model.id;
+      let paint = modelColorMemory.get(key);
+      if (!paint || used.has(paint)) {
+        const available = [color(model.provider), ...MODEL_PALETTE].filter(value => !used.has(value));
+        if (available.length) {
+          paint = available.reduce((best, candidate) => {
+            const score = Math.min(...[...used].map(value => colorDistance(candidate, value)));
+            const bestScore = Math.min(...[...used].map(value => colorDistance(best, value)));
+            return score > bestScore ? candidate : best;
+          }, available[0]);
+        } else {
+          paint = `hsl(${Math.round(used.size * 137.508) % 360} 75% 68%)`;
+        }
+        modelColorMemory.set(key, paint);
+      }
+      used.add(paint);
+      chartModelColors.set(model.id, paint);
+    }
+  }
+}
+
+function chartLegend(data) {
+  const groups = new Map();
+  for (const model of data) {
+    if (!groups.has(model.provider)) groups.set(model.provider, []);
+    groups.get(model.provider).push(model);
+  }
+  const providers = [...groups].map(([name, group]) => {
+    const swatches = group.slice(0, 4).map(model =>
+      `<i style="background:${modelPaint(model)}"></i>`).join('');
+    return `<button type="button" class="legend-item" data-provider-focus="${esc(name)}" aria-pressed="false" aria-label="聚焦 ${esc(name)}"><span class="provider-swatches">${swatches}</span>${esc(name)} <small>${group.length}</small></button>`;
+  }).join('');
+  const peers = [...groups.values()].filter(group => group.length > 1).flat();
+  const details = peers.length && peers.length <= 8
+    ? peers.map(model => `<span class="model-color-key"><i style="background:${modelPaint(model)}"></i>${esc(model.name)}</span>`).join('')
+    : peers.length > 8 ? '<span class="color-key-note">點位依模型配色；移到點上查看名稱</span>' : '';
+  return providers + details + '<span><i class="front-ring"></i>有效前緣</span>';
+}
 let models=[],selected=new Set(),providerSet=new Set(['OpenAI','Anthropic']),busy=false,loadedMode='web',lastFetched=null,anchor=null,drag=null,everLoaded=false;
 let sortKey='score',sortDir='desc';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1322,7 +1396,7 @@ function chartCost(value) {
 function showPlotPoint(point, cx, cy) {
   if (!plotState) return;
   const {svg, points, left, right, top, bottom} = plotState;
-  const {m, x, y} = point, paint = color(m.provider);
+  const {m, x, y} = point, paint = modelPaint(m);
   const peers = points.filter(other => other !== point && Math.abs(other.x - x) < .01 && Math.abs(other.y - y) < .01);
   plotState.active = point;
   const group = svg.querySelector('#plotHighlight');
@@ -1779,7 +1853,7 @@ function createPointElement(point) {
 }
 
 function updatePointElement(point) {
-  const paint = color(point.m.provider);
+  const paint = modelPaint(point.m);
   point.ring.setAttribute('stroke', paint);
   point.ring.setAttribute('visibility', point.front ? 'visible' : 'hidden');
   point.dot.setAttribute('fill', paint);
@@ -1806,7 +1880,7 @@ function updatePlotData(state, pick) {
       inView: previous?.inView
     };
     if (!point.element) state.pointLayer.append(createPointElement(point));
-    else if (previous.front !== point.front || previous.m.provider !== model.provider) updatePointElement(point);
+    else updatePointElement(point);
     nextPoints.push(point);
     nextMap.set(model.id, point);
   }
@@ -1824,10 +1898,7 @@ function updatePlotData(state, pick) {
   viewByMode[state.mode] = constrainView(viewByMode[state.mode] ?? baseView);
   drawViewport(state);
 
-  const providerCounts = new Map();
-  for (const model of data) providerCounts.set(model.provider, (providerCounts.get(model.provider) ?? 0) + 1);
-  const legend = $('scatter').querySelector('.plot-legend');
-  legend.innerHTML = `${[...providerCounts].map(([name, count]) => `<button type="button" class="legend-item" data-provider-focus="${esc(name)}" aria-pressed="false" aria-label="聚焦 ${esc(name)}"><i style="background:${color(name)}"></i>${esc(name)} <small>${count}</small></button>`).join('')}<span><i class="front-ring"></i>有效前緣</span>`;
+  $('scatter').querySelector('.plot-legend').innerHTML = chartLegend(data);
   $('scatter').querySelector('.plot-count').textContent =
     `已繪製 ${data.length} 個模型${pick.length > data.length ? `，另有 ${pick.length - data.length} 個模型缺少可繪製的數值` : ''}`;
 
@@ -2066,7 +2137,7 @@ function updateTimePlotData(pick) {
       const element = createPointElement(point);
       element.classList.add('time-plot-point');
       state.pointLayer.append(element);
-    } else if (previous.front !== point.front || previous.m.provider !== model.provider) updatePointElement(point);
+    } else updatePointElement(point);
     nextPoints.push(point);
     nextMap.set(model.id, point);
   }
@@ -2079,10 +2150,7 @@ function updateTimePlotData(pick) {
   state.ticks = state.width < 500 ? 3 : 6;
   timeViewByMode[state.mode] = constrainView(timeViewByMode[state.mode] ?? baseView);
   timeDrawViewport(state);
-  const providerCounts = new Map();
-  for (const model of data) providerCounts.set(model.provider, (providerCounts.get(model.provider) ?? 0) + 1);
-  const legend = $('timeScatter').querySelector('.plot-legend');
-  legend.innerHTML = `${[...providerCounts].map(([name, count]) => `<button type="button" class="legend-item" data-provider-focus="${esc(name)}" aria-pressed="false" aria-label="聚焦 ${esc(name)}"><i style="background:${color(name)}"></i>${esc(name)} <small>${count}</small></button>`).join('')}<span><i class="front-ring"></i>有效前緣</span>`;
+  $('timeScatter').querySelector('.plot-legend').innerHTML = chartLegend(data);
   $('timeScatter').querySelector('.plot-count').textContent = `已繪製 ${data.length} 個模型${pick.length > data.length ? `，另有 ${pick.length - data.length} 個模型缺少任務時間或智慧指數` : ''}`;
   if (state.active && !nextMap.has(state.active.m.id)) hidePlotTip();
   paintPlotEmphasis();
@@ -2092,7 +2160,7 @@ function showTimePlotPoint(point, cx, cy) {
   if (!timePlotState) return;
   const state = timePlotState;
   const {svg, points, left, right, top, bottom} = state;
-  const {m, x, y} = point, paint = color(m.provider);
+  const {m, x, y} = point, paint = modelPaint(m);
   const peers = points.filter(other => other !== point && Math.abs(other.x - x) < .01 && Math.abs(other.y - y) < .01);
   state.active = point;
   const group = svg.querySelector('#timePlotHighlight');
@@ -2423,6 +2491,7 @@ function updateChartHeading() {
 }
 
 function renderChart(pick = chosen()) {
+  updateModelColors(pick);
   const view = chartViews.value;
   $('nameSetting').hidden = view === 'orbit';
   for (const [mode, toolbar, panel] of [
@@ -2670,11 +2739,7 @@ function renderOrbit(pick) {
       return value / (max - min) - min / (max - min) - .5;
     })
   }));
-  const counts = new Map();
-  for (const model of data) counts.set(model.provider, (counts.get(model.provider) ?? 0) + 1);
-  $('orbitLegend').innerHTML = [...counts].map(([name, count]) =>
-    `<button type="button" class="legend-item" data-provider-focus="${esc(name)}" aria-pressed="false"><i style="background:${color(name)}"></i>${esc(name)} <small>${count}</small></button>`
-  ).join('') + '<span><i class="front-ring"></i>有效前緣</span>';
+  $('orbitLegend').innerHTML = chartLegend(data);
   $('orbitLegend').hidden = !data.length;
   $('orbitCount').textContent = data.length
     ? `已繪製 ${data.length} 個模型${pick.length > data.length ? `，${pick.length - data.length} 個缺少三維所需數值` : ''}`
@@ -2778,7 +2843,7 @@ function drawOrbit() {
   const drawPoint = point => {
     const emphasized = point.m.id === pinned || point === orbitHovered;
     ctx.globalAlpha = !emphasized && ((provider && provider !== point.m.provider) || (frontOnly && !point.front)) ? .17 : 1;
-    ctx.strokeStyle = color(point.m.provider);
+    ctx.strokeStyle = modelPaint(point.m);
     if (point.front || emphasized) {
       ctx.beginPath();
       ctx.arc(point.x, point.y, emphasized ? 10 : 7.5, 0, 2 * Math.PI);
@@ -2787,7 +2852,7 @@ function drawOrbit() {
     }
     ctx.beginPath();
     ctx.arc(point.x, point.y, emphasized ? 5.5 : 4.3, 0, 2 * Math.PI);
-    ctx.fillStyle = color(point.m.provider);
+    ctx.fillStyle = modelPaint(point.m);
     ctx.fill();
     ctx.strokeStyle = '#222425';
     ctx.lineWidth = 1;
