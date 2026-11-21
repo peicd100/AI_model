@@ -3206,8 +3206,13 @@ $('selectAll').onclick = () => {
   render();
 };
 $('selectVisible').onclick = () => {
-  visible().forEach(model => selected.add(model.id));
-  if (everLoaded) saveSelection();
+  selected = new Set(visible().map(model => model.id));
+  if ($('selectedOnly').checked) tableWrap.scrollTop = 0;
+  anchor = null;
+  if (everLoaded) {
+    selectionByMode[loadedMode] = [...selected];
+    scheduleSavePreferences();
+  }
   render();
 };
 
