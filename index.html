@@ -785,6 +785,12 @@ function updateModelColors(pick) {
     if (!groups.has(model.provider)) groups.set(model.provider, []);
     groups.get(model.provider).push(model);
   }
+  // Comparing providers: one consistent color per company, regardless of model count.
+  if (groups.size > 1) {
+    for (const model of pick) chartModelColors.set(model.id, color(model.provider));
+    return;
+  }
+  // Comparing models within one provider: assign each model a distinct color.
   for (const group of groups.values()) {
     if (group.length === 1) {
       chartModelColors.set(group[0].id, color(group[0].provider));
@@ -819,12 +825,14 @@ function chartLegend(data) {
     if (!groups.has(model.provider)) groups.set(model.provider, []);
     groups.get(model.provider).push(model);
   }
+  const singleProvider = groups.size === 1;
   const providers = [...groups].map(([name, group]) => {
-    const swatches = group.slice(0, 4).map(model =>
-      `<i style="background:${modelPaint(model)}"></i>`).join('');
+    const swatches = singleProvider
+      ? group.slice(0, 4).map(model => `<i style="background:${modelPaint(model)}"></i>`).join('')
+      : `<i style="background:${color(name)}"></i>`;
     return `<button type="button" class="legend-item" data-provider-focus="${esc(name)}" aria-pressed="false" aria-label="聚焦 ${esc(name)}"><span class="provider-swatches">${swatches}</span>${esc(name)} <small>${group.length}</small></button>`;
   }).join('');
-  const peers = [...groups.values()].filter(group => group.length > 1).flat();
+  const peers = singleProvider ? [...groups.values()].filter(group => group.length > 1).flat() : [];
   const details = peers.length && peers.length <= 8
     ? peers.map(model => `<span class="model-color-key"><i style="background:${modelPaint(model)}"></i>${esc(model.name)}</span>`).join('')
     : peers.length > 8 ? '<span class="color-key-note">點位依模型配色；移到點上查看名稱</span>' : '';
@@ -2491,8 +2499,9 @@ function updateChartHeading() {
 }
 
 function renderChart(pick = chosen()) {
-  updateModelColors(pick);
   const view = chartViews.value;
+  // Only models that can be drawn in the active view determine the color mode.
+  updateModelColors(pick.filter(model => canPlotModel(model, view)));
   $('nameSetting').hidden = view === 'orbit';
   for (const [mode, toolbar, panel] of [
     ['orbit', 'orbitToolbar', 'orbitPanel'],
